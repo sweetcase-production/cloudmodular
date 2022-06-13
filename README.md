@@ -12,6 +12,10 @@
     <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white">
 </div>
 
+<p align="center">
+    <img width="100", height="100", src="/readme-assets/title.png">
+</p>
+
 The Constructive Cloud Service for your NAS Server
 
 직접 설치하는 클라우드 서비스
