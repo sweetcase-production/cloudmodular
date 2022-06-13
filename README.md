@@ -13,7 +13,7 @@
 </div>
 
 <p align="center">
-    <img width="100", height="100", src="readme-assets/title.png">
+    <img width="70%" src="https://raw.githubusercontent.com/SweetCase-Cobalto/cloudmodular/main/readme-asset/title.png?token=GHSAT0AAAAAABUZRX43MQBPTOW7QM2WY5DWYVHIGLA">
 </p>
 
 The Constructive Cloud Service for your NAS Server
