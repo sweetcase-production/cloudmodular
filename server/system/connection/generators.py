@@ -1,3 +1,7 @@
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.orm.decl_api import DeclarativeMeta
+from sqlalchemy.orm.session import sessionmaker
+
 from architecture.system.generator import (
     MariaDBGenerator, 
     MySQLGenerator,
@@ -5,6 +9,7 @@ from architecture.system.generator import (
     SQLiteGenerator
 )
 from typing import Dict, Type
+
 
 class DatabaseGenerator:
 
@@ -26,15 +31,15 @@ class DatabaseGenerator:
         return DatabaseGenerator.db_map[DatabaseGenerator.db]
 
     @staticmethod
-    def get_engine():
+    def get_engine() -> Engine:
         return DatabaseGenerator._get_gen().get_engine()
     
     @staticmethod
-    def get_base():
+    def get_base() -> DeclarativeMeta:
         return DatabaseGenerator._get_gen().get_base()
     
     @staticmethod
-    def get_session():
+    def get_session() -> sessionmaker:
         return DatabaseGenerator._get_gen().get_session()
 
 

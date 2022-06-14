@@ -1,6 +1,17 @@
 from abc import ABCMeta, ABC
 from typing import Type
-from architecture.system.connection import InfraConnection, MariaDBConnection, MySQLConnection, RDBConnection, SQLiteConnection
+
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.orm.decl_api import DeclarativeMeta
+from sqlalchemy.orm.session import sessionmaker
+
+from architecture.system.connection import (
+    InfraConnection, 
+    MariaDBConnection, 
+    MySQLConnection, 
+    RDBConnection, 
+    SQLiteConnection
+)
 
 
 
@@ -24,15 +35,15 @@ class RDBGenerator(InfraGenerator, ABC):
     conn: Type[RDBConnection]
 
     @classmethod
-    def get_engine(cls):
+    def get_engine(cls) -> Engine:
         return cls.conn.get_instance().Engine
 
     @classmethod
-    def get_base(cls):
+    def get_base(cls) -> DeclarativeMeta:
         return cls.conn.get_instance().ModelBase
     
     @classmethod
-    def get_session(cls):
+    def get_session(cls) -> sessionmaker:
         return cls.conn.get_instance().Session
 
 class MySQLGenerator(RDBGenerator):

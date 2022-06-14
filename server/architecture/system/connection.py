@@ -5,6 +5,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.orm.decl_api import DeclarativeMeta
+from sqlalchemy.orm.session import sessionmaker as class_sessionmaker
 
 class InfraConnection(metaclass=ABCMeta):
     """
@@ -73,9 +76,9 @@ class RDBConnection(InfraConnection, ABC):
     sqlalchemy 엔진을 사용한다.
     """
     
-    engine: Any
-    base: Any
-    session: Any
+    engine: Engine
+    base: DeclarativeMeta
+    session: class_sessionmaker
     url: str
 
     @abstractmethod
@@ -86,15 +89,15 @@ class RDBConnection(InfraConnection, ABC):
         pass
 
     @property
-    def Engine(self):
+    def Engine(self) -> Engine:
         return self.engine
     
     @property
-    def ModelBase(self):
+    def ModelBase(self) -> DeclarativeMeta:
         return self.base
     
     @property
-    def Session(self):
+    def Session(self) -> class_sessionmaker:
         return self.session
 
 class ProgramedRDBConnection(RDBConnection, ABC):
