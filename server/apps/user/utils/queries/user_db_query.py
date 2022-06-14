@@ -3,7 +3,7 @@ from typing import Optional
 
 from apps.user.models import User
 from apps.user.schemas import UserCreate
-from architecture.query.crud import QueryCRUD, QueryCreator, QueryDestroyer
+from architecture.query.crud import QueryCRUD, QueryCreator, QueryDestroyer, QueryReader
 from core.exc import UserNotFound
 from system.connection.generators import DatabaseGenerator
 
@@ -11,8 +11,8 @@ from system.connection.generators import DatabaseGenerator
 
 class UserDBQueryCreator(QueryCreator):
     def __call__(self, user_format: UserCreate) -> User:
-        session = DatabaseGenerator.get_session()
 
+        session = DatabaseGenerator.get_session()
         q = session.query(User)
         # 동일한 name이나 email이 있으면 안된다.
         assert q.filter(or_(
@@ -37,6 +37,34 @@ class UserDBQueryCreator(QueryCreator):
         finally:
             session.close()
 
+class UserDBQueryReader(QueryReader):
+    def __call__(
+        self,
+        user_name: Optional[str] = None, 
+        user_email: Optional[str] = None, 
+        user_id: Optional[int] = None
+    ) -> Optional[User]:
+
+        session = DatabaseGenerator.get_session()
+        q = session.query(User)
+        user: User = None
+
+        try:
+            if user_name:
+                user = q.filter(User.name == user_name).scalar()
+            elif user_email:
+                user = q.filter(User.email == user_email).scalar()
+            elif user_id:
+                user = q.filter(User.id == user_id).scalar()
+        except Exception as e:
+            session.rollback()
+            raise e
+        else:
+            return user
+        finally:
+            session.close()
+
+
 class UserDBQueryDestroyer(QueryDestroyer):
     def __call__(
         self,
@@ -44,6 +72,7 @@ class UserDBQueryDestroyer(QueryDestroyer):
         user_email: Optional[str] = None, 
         user_id: Optional[int] = None
     ) -> int:
+
         session = DatabaseGenerator.get_session()
         q = session.query(User)
         user: User = None
@@ -66,5 +95,6 @@ class UserDBQueryDestroyer(QueryDestroyer):
             session.close()
 
 class UserDBQuery(QueryCRUD):
+    reader = UserDBQueryReader()
     creator = UserDBQueryCreator()
-    destroyer: UserDBQueryDestroyer()
+    destroyer = UserDBQueryDestroyer()

@@ -70,6 +70,9 @@ DB_PASSWD=<DB User pswd>
 
 ADMIN_EMAIL=<관리자 이메일>
 ADMIN_EMAIL_PASSWD=<관리자 2차 이메일 패스워드>
+
+JWT_KEY=<jwt key>
+JWT_ALGORITHM=<jwt 알고리즘 (HS256 권장)>
 ```
 6. Model Table을 DB에 추가할 수 있게 마이그레이션을 진행합니다.
 ```

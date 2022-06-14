@@ -1,6 +1,7 @@
 from pydantic import BaseModel, validator
 from pydantic import validate_email as check_email
 import re
+import datetime
 
 class UserBase(BaseModel):
 
@@ -40,3 +41,8 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     pass
+
+
+class UserRead(UserBase):
+    id: int
+    created: datetime.datetime

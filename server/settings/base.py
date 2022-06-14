@@ -27,3 +27,7 @@ ADMIN = {
     'email': os.getenv('ADMIN_EMAIL'),
     'email_2nd_pswd': os.getenv('ADMIN_EMAIL_PASSWD'),
 }
+JWT = {
+    'key': os.getenv('JWT_KEY'),
+    'algorithm': os.getenv('JWT_ALGORITHM'),
+}

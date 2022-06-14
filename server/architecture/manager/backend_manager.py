@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Dict, Any
 
 from architecture.manager.base_manager import BackendManager
+from architecture.query.auth import AuthTokenGenerator
 from architecture.query.crud import QueryCRUD
 
 
@@ -31,3 +33,13 @@ class CRUDManager(BackendManager, ABC):
     @abstractmethod
     def search(self, *args, **kwargs):
         pass
+
+class AuthManager(BackendManager):
+    
+    token_generator: AuthTokenGenerator
+
+    def generate_token(self, req: Dict[str, Any]):
+        return self.token_generator.generate(req)
+
+    def read_token(self, token: str):
+        return self.token_generator.decode(token)
