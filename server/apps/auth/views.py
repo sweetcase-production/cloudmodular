@@ -1,9 +1,12 @@
-from fastapi import HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 
 from apps.auth.utils.managers import AppAuthManager
-from apps.routers import auth_router
 
-TOKEN_ISSUES = ('logined', 'passwd-finding', 'first-setting')
+auth_router = APIRouter(
+    prefix='/api/auth',
+    tags=['auth'],
+    responses={404: {'error': 'Not Found'}}
+)
 
 class TokenGenerateView:
     """
@@ -25,6 +28,7 @@ class TokenGenerateView:
                 return {'token': token}
             else:
                 # 알 수 없는 요청
+                
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail='알 수 없는 요청입니다.')
@@ -32,7 +36,12 @@ class TokenGenerateView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='요청 데이터가 부족합니다.')
-        except Exception:
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='입력한 정보가 맞지 않습니다.')
+        except Exception as e:
+            print(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="server errror")

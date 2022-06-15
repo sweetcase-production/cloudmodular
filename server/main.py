@@ -7,13 +7,13 @@ from fastapi import FastAPI
 import uvicorn
 import argparse
 
-from core.init import init_app
 from settings.base import *
 from system.bootloader import Bootloader
 
-
 # Engines
 DatabaseGenerator.load(db_type=DATABASE['type'], **DATABASE['data'])
+
+from core.init import init_app
 app: FastAPI = init_app()
 
 if __name__ == '__main__':

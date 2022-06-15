@@ -1,11 +1,4 @@
-from fastapi import APIRouter
-
-
-auth_router = APIRouter(
-    prefix='/api/auth',
-    tags=['auth'],
-    responses={404: {'error': 'Not Found'}}
-)
+from apps.auth.views import auth_router
 
 API_ROUTERS = [
     auth_router,

@@ -39,7 +39,7 @@ class AuthManager(BackendManager):
     token_generator: AuthTokenGenerator
 
     def generate_token(self, req: Dict[str, Any]):
-        return self.token_generator.generate(req)
+        return self.token_generator().generate(req)
 
     def read_token(self, token: str):
-        return self.token_generator.decode(token)
+        return self.token_generator().decode(token)
