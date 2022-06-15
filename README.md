@@ -82,6 +82,11 @@ $ python main.py --method=migrate --type=dev
 ```
 $ python main.py --method=run-app --type=dev
 ```
+8. 유닛테스트를 진행할 경우, 마이그레이션을 할 필요가 없습니다. 바로 pytest를 입력합니다
+```
+$ pytest -ss
+```
+
 
 ## 시스템 구성도
 
