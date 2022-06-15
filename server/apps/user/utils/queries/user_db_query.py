@@ -52,7 +52,6 @@ class UserDBQueryReader(QueryReader):
         session = DatabaseGenerator.get_session()
         q = session.query(User)
         user: User = None
-
         try:
             if user_name:
                 user = q.filter(User.name == user_name).scalar()
@@ -99,6 +98,6 @@ class UserDBQueryDestroyer(QueryDestroyer):
             session.close()
 
 class UserDBQuery(QueryCRUD):
-    reader = UserDBQueryReader()
-    creator = UserDBQueryCreator()
-    destroyer = UserDBQueryDestroyer()
+    reader = UserDBQueryReader
+    creator = UserDBQueryCreator
+    destroyer = UserDBQueryDestroyer

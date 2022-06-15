@@ -17,7 +17,12 @@ class TokenGenerateView:
         path='/token',
         status_code=status.HTTP_201_CREATED)
     async def get_token(request: Request):
-        req = await request.json()
+        try:
+            req = await request.json()
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="요청 데이터가 없습니다.")
         try:
             token_issue = req['issue']
             if token_issue == 'login':
@@ -28,7 +33,6 @@ class TokenGenerateView:
                 return {'token': token}
             else:
                 # 알 수 없는 요청
-                
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail='알 수 없는 요청입니다.')
@@ -40,8 +44,7 @@ class TokenGenerateView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='입력한 정보가 맞지 않습니다.')
-        except Exception as e:
-            print(e)
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="server errror")

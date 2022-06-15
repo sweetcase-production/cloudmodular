@@ -1,7 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 
-from typing import Optional
-
+from typing import Type
 
 class QueryMethod(metaclass=ABCMeta):
     @abstractmethod
@@ -39,16 +38,16 @@ class QuerySearcher(QueryMethod, ABC):
         pass
 
 class QueryCRUD(metaclass=ABCMeta):
-    creator: Optional[QueryCreator] = None
-    reader: Optional[QueryReader] = None
-    updator: Optional[QueryUpdator] = None
-    destroyer: Optional[QueryDestroyer] = None
-    searcher: Optional[QuerySearcher] = None
+    creator: Type[QueryCreator] = None
+    reader: Type[QueryReader] = None
+    updator: Type[QueryUpdator] = None
+    destroyer: Type[QueryDestroyer] = None
+    searcher: Type[QuerySearcher] = None
 
-    def _run_query(self, method: Optional[QueryMethod], *args, **kwargs):
+    def _run_query(self, method: Type[QueryMethod], *args, **kwargs):
         if not method:
             raise PermissionError('method not allowed')
-        return method(*args, **kwargs)
+        return method()(*args, **kwargs)
 
     def create(self, *args, **kwargs):
         return self._run_query(self.creator, *args, **kwargs)

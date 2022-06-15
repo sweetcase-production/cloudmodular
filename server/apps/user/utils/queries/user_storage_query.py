@@ -44,5 +44,5 @@ class UserStorageDestroyer(QueryDestroyer):
 
 
 class UserStorageQuery(QueryCRUD):
-    creator = UserStorageCreator()
-    destroyer = UserStorageDestroyer()
+    creator = UserStorageCreator
+    destroyer = UserStorageDestroyer

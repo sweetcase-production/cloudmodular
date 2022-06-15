@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Dict, Any, Type
 
 from architecture.manager.base_manager import BackendManager
 from architecture.query.auth import AuthTokenGenerator
@@ -36,7 +36,7 @@ class CRUDManager(BackendManager, ABC):
 
 class AuthManager(BackendManager):
     
-    token_generator: AuthTokenGenerator
+    token_generator: Type[AuthTokenGenerator]
 
     def generate_token(self, req: Dict[str, Any]):
         return self.token_generator().generate(req)
