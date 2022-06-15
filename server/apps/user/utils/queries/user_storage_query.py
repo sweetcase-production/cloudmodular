@@ -7,9 +7,8 @@ from core.exc import UserStorageAlreadyExists
 from settings.base import SERVER
 
 
-
 class UserStorageCreator(QueryCreator):
-    def __call__(user_id: int, force: bool = False) -> str:
+    def __call__(self, user_id: int, force: bool = False) -> str:
         """
         해당 유저가 사용할 디렉토리들을 생성한다.
         DB상에서의 User를 처리한 다음 사용하는 것을 권장한다.
@@ -38,7 +37,7 @@ class UserStorageCreator(QueryCreator):
         return main_root
 
 class UserStorageDestroyer(QueryDestroyer):
-    def __call__(user_id: int):
+    def __call__(self, user_id: int):
 
         main_root = f'{SERVER["storage"]}/{user_id}'
         shutil.rmtree(main_root)

@@ -3,8 +3,12 @@ from typing import Optional
 
 from apps.user.models import User
 from apps.user.schemas import UserCreate
-from architecture.query.crud import QueryCRUD, QueryCreator, QueryDestroyer, QueryReader
-from core.exc import UserNotFound
+from architecture.query.crud import (
+    QueryCRUD, 
+    QueryCreator, 
+    QueryDestroyer, 
+    QueryReader
+)
 from system.connection.generators import DatabaseGenerator
 
 
@@ -24,7 +28,7 @@ class UserDBQueryCreator(QueryCreator):
             assert q.filter(User.is_admin == True).scalar() is None
         try:
             # DB 업로드
-            user: User = User(**user_format)
+            user: User = User(**(user_format.dict()))
             session.add(user)
             session.commit()
             session.refresh(user)

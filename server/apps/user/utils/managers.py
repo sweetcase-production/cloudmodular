@@ -2,7 +2,7 @@ from typing import Optional
 from apps.user.models import User
 from apps.user.schemas import UserCreate
 from apps.user.utils.queries.user_db_query import UserDBQuery
-from apps.user.utils.queries.user_storage_query import UserStorageCreator, UserStorageQuery
+from apps.user.utils.queries.user_storage_query import UserStorageQuery
 from architecture.manager.backend_manager import CRUDManager
 
 
@@ -14,7 +14,7 @@ class UserCRUDManager(CRUDManager):
         email: str,
         name: str,
         passwd: str,
-        storage_size: str,
+        storage_size: int,
         is_admin: bool = False,
     ):
         # DB Upload
@@ -28,7 +28,7 @@ class UserCRUDManager(CRUDManager):
         user: User = UserDBQuery().create(user_schema)
         # Directory 생성
         try:
-            UserStorageCreator().create(user_id=user.id, force=True)
+            UserStorageQuery().create(user_id=user.id, force=True)
         except Exception as e:
             # 실패시 User 삭제
             UserDBQuery().destroy(user_id=user.id)

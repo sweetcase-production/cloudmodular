@@ -1,6 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 
-from typing import Optional, Type
+from typing import Optional
 
 
 class QueryMethod(metaclass=ABCMeta):

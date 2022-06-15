@@ -98,7 +98,7 @@ class RDBConnection(InfraConnection, ABC):
     
     @property
     def Session(self) -> class_sessionmaker:
-        return self.session
+        return self.session()
 
 class ProgramedRDBConnection(RDBConnection, ABC):
     """
