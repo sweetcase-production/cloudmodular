@@ -20,4 +20,3 @@ def api():
     # Remove Application
     Bootloader.remove_storage()
     Bootloader.remove_database()
-

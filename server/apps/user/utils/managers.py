@@ -10,6 +10,7 @@ class UserCRUDManager(CRUDManager):
 
 
     def create(
+        self,
         email: str,
         name: str,
         passwd: str,
@@ -33,7 +34,7 @@ class UserCRUDManager(CRUDManager):
             UserDBQuery().destroy(user_id=user.id)
             raise e
 
-    def update():
+    def update(self):
         raise NotImplementedError
     
     def read(
@@ -49,6 +50,7 @@ class UserCRUDManager(CRUDManager):
         )
 
     def destroy(
+        self,
         user_name: Optional[str] = None,
         user_email: Optional[str] = None,
         user_id: Optional[int] = None
@@ -60,5 +62,5 @@ class UserCRUDManager(CRUDManager):
             
         )
         UserStorageQuery().destory(user_id=removed_id)
-    def search():
+    def search(self):
         raise NotImplementedError

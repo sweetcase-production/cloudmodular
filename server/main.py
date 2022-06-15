@@ -1,19 +1,15 @@
 from dotenv import load_dotenv
-
-from system.connection.generators import DatabaseGenerator
-# Load env data
 load_dotenv()
 
+from system.connection.generators import DatabaseGenerator
 
 from fastapi import FastAPI
 import uvicorn
 import argparse
 
 from core.init import init_app
-from settings.base import DATABASE, SERVER
+from settings.base import *
 from system.bootloader import Bootloader
-
-# APP, DB Run
 
 if __name__ == '__main__':
     """
@@ -49,8 +45,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Engines
-    app: FastAPI = init_app()
     DatabaseGenerator.load(db_type=DATABASE['type'], **DATABASE['data'])
+    app: FastAPI = init_app()
 
     # 분기 실행
     if args.method == 'run-app':
