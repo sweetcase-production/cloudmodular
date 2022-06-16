@@ -2,12 +2,13 @@ from sqlalchemy import or_
 from typing import Optional
 
 from apps.user.models import User
-from apps.user.schemas import UserCreate
+from apps.user.schemas import UserCreate, UserUpdate
 from architecture.query.crud import (
     QueryCRUD, 
     QueryCreator, 
     QueryDestroyer, 
-    QueryReader
+    QueryReader,
+    QueryUpdator
 )
 from core.exc import UserAlreadyExists, UserNotFound
 from system.connection.generators import DatabaseGenerator
@@ -42,6 +43,33 @@ class UserDBQueryCreator(QueryCreator):
             return user
         finally:
             session.close()
+
+class UserDBQueryUpdator(QueryUpdator):
+    def __call__(self, update_format: UserUpdate) -> User:
+
+        session = DatabaseGenerator.get_session()
+        q = session.query(User)
+        # 해당 유저가 존재하는 지 확인한다.
+        user: User = q.filter(User.id == update_format.id).scalar()
+        if not user:
+            # 유저 없음
+            raise UserNotFound()
+        # 데이터 변경 시도
+        user.name = update_format.name
+        user.passwd = update_format.passwd
+        # 커밋
+        try:
+            session.commit()
+            session.refresh(user)
+        except Exception as e:
+            # 실패 시 rollback
+            session.rollback()
+            raise e
+        else:
+            return user
+        finally:
+            session.close()
+
 
 class UserDBQueryReader(QueryReader):
     def __call__(
@@ -107,3 +135,4 @@ class UserDBQuery(QueryCRUD):
     reader = UserDBQueryReader
     creator = UserDBQueryCreator
     destroyer = UserDBQueryDestroyer
+    updator = UserDBQueryUpdator

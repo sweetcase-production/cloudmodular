@@ -43,27 +43,31 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
-def test_failed_because_not_has_token(api: TestClient):
+def test_no_token(api: TestClient):
     res = api.delete(f'/api/user/{admin_info["id"]}')
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
-def test_failed_because_he_is_not_admin(api: TestClient):
+def test_no_admin(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
+    
     res = api.delete(f'/api/user/{admin_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
-def test_failed_because_user_is_not_exists(api: TestClient):
+def test_user_not_exists(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     res = api.delete(f'/api/user/0', headers={'Token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_success(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     res = api.delete(f'/api/user/{client_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_204_NO_CONTENT
+
     # 부검
     # 디렉토리가 아직 남아있는 지 확인
     from settings.base import SERVER
@@ -80,8 +84,9 @@ def test_success(api: TestClient):
     res = api.delete(f'/api/user/{client_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
-def test_do_not_remove_admin_user(api: TestClient):
+def test_remove_admin_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     res = api.delete(f'/api/user/{admin_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_403_FORBIDDEN

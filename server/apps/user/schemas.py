@@ -54,6 +54,14 @@ class UserCreate(UserBase):
     def validate_email(cls, email: str):
         return _validate_email(cls, email)
 
+class UserUpdate(UserBase):
+    id: int
+    passwd: str
+
+    @validator('passwd')
+    def validate_passwd(cls, passwd: str):
+        return _validate_passwd(cls, passwd)
+
 class UserRead(UserBase):
 
     storage_size: int

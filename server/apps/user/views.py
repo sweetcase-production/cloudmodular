@@ -116,6 +116,66 @@ class UserView:
             return user
 
     @staticmethod
+    @user_router.patch(
+        path='/{pk}',
+        status_code=status.HTTP_200_OK,
+        response_model=UserRead)
+    async def update_user(request: Request, pk: int):
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        
+        try:
+            # 요청 데이터 가져오기
+            req = await request.json()
+        except json.decoder.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='요청 데이터가 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            # 업데이트 하기
+            user: User = UserManager() \
+                .update_user(
+                    token=token,
+                    pk=pk, **req
+                )
+        except TypeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='요청 데이터의 일부가 빠져있습니다.')
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='권한이 없습니다.')
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='없는 사용자 입니다.')
+        except pydantic.ValidationError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e))
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            return user
+
+    @staticmethod
     @user_router.delete(
         path='/{pk}',
         status_code=status.HTTP_204_NO_CONTENT)

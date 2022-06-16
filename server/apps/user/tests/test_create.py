@@ -41,7 +41,7 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
-def test_failed_because_no_login(api: TestClient):
+def test_no_login(api: TestClient):
     req = {
         'email': 'themail@gmail.com',
         'name': 'JooHyun',
@@ -54,12 +54,14 @@ def test_failed_because_no_login(api: TestClient):
 def test_all_omit_req_data(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     res = api.post('/api/user', headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_some_omit_req_data(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': 'themail@gmail.com',
         'name': 'JooHyun',
@@ -68,9 +70,10 @@ def test_some_omit_req_data(api: TestClient):
     res = api.post('/api/user', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_failed_no_admin(api: TestClient):
+def test_no_admin(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': 'themail@gmail.com',
         'name': 'JooHyun',
@@ -86,9 +89,10 @@ def test_failed_token_is_no_login_issue(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
 """
 
-def test_email_validation_failed(api: TestClient):
+def test_email_validation(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': 'themail.gmail.com',
         'name': 'JooHyun',
@@ -98,9 +102,10 @@ def test_email_validation_failed(api: TestClient):
     res = api.post('/api/user', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_name_validation_failed(api: TestClient):
+def test_name_validation(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': 'themail@gmail.com',
         'name': 'a'*3,
@@ -118,9 +123,10 @@ def test_name_validation_failed(api: TestClient):
     res = api.post('/api/user', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_passwd_validation_failed(api: TestClient):
+def test_passwd_validation(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': 'themail@gmail.com',
         'name': 'user001',
@@ -134,9 +140,10 @@ def test_passwd_validation_failed(api: TestClient):
     res = api.post('/api/user', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_storage_size_validation_failed(api: TestClient):
+def test_storage_size_validation(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': 'themail@gmail.com',
         'name': 'user001',
@@ -146,9 +153,10 @@ def test_storage_size_validation_failed(api: TestClient):
     res = api.post('/api/user', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_failed_same_data(api: TestClient):
+def test_upload_same_data(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     req = {
         'email': client_info['email'],
         'name': 'user001',
@@ -170,6 +178,7 @@ def test_failed_same_data(api: TestClient):
 def test_success(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+    
     req = {
         'email': 'themail@gmail.com',
         'name': 'user001',

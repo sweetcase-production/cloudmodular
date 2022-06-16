@@ -1,7 +1,7 @@
 from typing import Optional
 
 from apps.user.models import User
-from apps.user.schemas import UserCreate
+from apps.user.schemas import UserCreate, UserUpdate
 from apps.user.utils.queries.user_db_query import UserDBQuery
 from apps.user.utils.queries.user_storage_query import UserStorageQuery
 from architecture.manager.backend_manager import CRUDManager
@@ -44,8 +44,22 @@ class UserCRUDManager(CRUDManager):
         else:
             return user
 
-    def update(self):
-        raise NotImplementedError
+    def update(
+        self,
+        user_id: int,
+        name: str,
+        passwd: str
+    ) -> User:
+        # Make Schema
+        update_schema = UserUpdate(
+            id=user_id,
+            name=name,
+            passwd=passwd
+        )
+        # Update
+        user: User = UserDBQuery().update(update_schema)
+        # get user model
+        return user
     
     def read(
         self,
@@ -109,7 +123,7 @@ class UserManager(FrontendManager):
             storage_size=storage_size
         )
 
-    def read_user(self, token: str, pk: str) -> User:
+    def read_user(self, token: str, pk: int) -> User:
         try:
             # token에서 해당 유저 정보를 추출
             decoded_token = LoginTokenGenerator().decode(token)
@@ -129,6 +143,29 @@ class UserManager(FrontendManager):
         if not user:
             # 검색 대상의 사용자가 없음
             raise UserNotFound()
+        return user
+
+    def update_user(self, token: str, pk: int, name: str, passwd: str) -> User:
+        try:
+            # token에서 해당 유저 정보를 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        # Email에 대한 유저 정보가 들어있지 않으면 PermissonFailed
+        operator: User = UserCRUDManager().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+        if not bool(AdminOnly(operator.is_admin) & LoginedOnly(issue)):
+            # 관리자 + 로그인 상태여야 한다.
+            raise PermissionError()
+        # 유저 업데이트
+        user: User = UserCRUDManager().update(
+            user_id=pk,
+            name=name,
+            passwd=passwd
+        )
         return user
 
     def remove_user(self, token: str, pk: str):
