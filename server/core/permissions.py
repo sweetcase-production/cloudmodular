@@ -1,4 +1,7 @@
-from architecture.query.permission import PermissionIssueChecker, PermissionUserLevelChecker
+from architecture.query.permission import (
+    PermissionIssueChecker, 
+    PermissionUserLevelChecker
+)
 
 
 class PermissionIssueLoginChecker(PermissionIssueChecker):

@@ -1,10 +1,16 @@
 from typing import Optional
+
 from apps.user.models import User
 from apps.user.schemas import UserCreate
 from apps.user.utils.queries.user_db_query import UserDBQuery
 from apps.user.utils.queries.user_storage_query import UserStorageQuery
 from architecture.manager.backend_manager import CRUDManager
-
+from architecture.manager.base_manager import FrontendManager
+from core.permissions import (
+    PermissionAdminChecker as AdminOnly,
+    PermissionIssueLoginChecker as LoginedOnly,
+)
+from core.token_generators import LoginTokenGenerator
 
 class UserCRUDManager(CRUDManager):
 
@@ -16,7 +22,7 @@ class UserCRUDManager(CRUDManager):
         passwd: str,
         storage_size: int,
         is_admin: bool = False,
-    ):
+    ) -> User:
         # DB Upload
         user_schema = UserCreate(
             email=email,
@@ -33,6 +39,8 @@ class UserCRUDManager(CRUDManager):
             # 실패시 User 삭제
             UserDBQuery().destroy(user_id=user.id)
             raise e
+        else:
+            return user
 
     def update(self):
         raise NotImplementedError
@@ -64,3 +72,37 @@ class UserCRUDManager(CRUDManager):
         UserStorageQuery().destory(user_id=removed_id)
     def search(self):
         raise NotImplementedError
+
+
+class UserManager(FrontendManager):
+
+    def create_user(
+        self,
+        token: str,
+        email: str,
+        name: str,
+        passwd: str,
+        storage_size: int
+    ) -> User:
+        try:
+            # token에서 해당 유저 정보를 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        # Email에 대한 User 데이터 가져오기
+        operator: User = UserCRUDManager().read(user_email=op_email)
+        if not operator:
+            # 해당 Email에 대한 User가 없는 경우
+            raise PermissionError()
+        if not bool(AdminOnly(operator.is_admin) & LoginedOnly(issue)):
+            # 관리자, 로그인 상태 둘 중 하나라도 아니면 Permisson Failed
+            raise PermissionError()
+        # User 생성을 위한 Create Format 생성
+        return UserCRUDManager().create(
+            email=email,
+            name=name,
+            passwd=passwd,
+            storage_size=storage_size
+        )

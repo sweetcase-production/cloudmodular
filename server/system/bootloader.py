@@ -30,6 +30,8 @@ class Bootloader:
         root = SERVER['storage']
         if not os.path.isdir(root):
             os.mkdir(root)
+        # 사용자 개인 데이터 저장에 사용되는 storage 디렉토리 생성
+        os.mkdir(f'{root}/storage')
 
     @staticmethod
     def remove_storage():

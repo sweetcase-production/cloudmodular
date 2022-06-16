@@ -45,3 +45,6 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     created: datetime.datetime
+    
+    class Config:
+        orm_mode = True

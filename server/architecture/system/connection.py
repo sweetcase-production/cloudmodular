@@ -178,7 +178,7 @@ class MariaDBConnection(ProgramedRDBConnection):
 
 class SQLiteConnection(RDBConnection):
     def _load(self):
-        self.url = 'sqlite:///data.db'
+        self.url = 'sqlite:///data.db?check_same_thread=False'
         self.engine = create_engine(self.url)
         self.session = sessionmaker(
             autocommit=False,

@@ -32,7 +32,7 @@ class PermissionSameUserChecker(PermissionChecker):
     동일한 유저인 지 체크
     """
     ref_v = None
-    func: lambda o1, o2: o1 == o2
+    func = lambda _, o1, o2: o1 == o2
 
     def __init__(self, v: str, target: str):
         self.ref_v = target
@@ -42,11 +42,11 @@ class PermissionIssueChecker(PermissionChecker, ABC):
     """
     JWT issue에 따른 체크
     """
-    func: lambda o1, o2: o1 == o2
+    func = lambda _, o1, o2: o1 == o2
 
 
 class PermissionUserLevelChecker(PermissionChecker, ABC):
     """
     유저 타입 체크
     """
-    func: lambda o1, o2: o1 == o2
+    func = lambda _, o1, o2: o1 == o2

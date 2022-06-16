@@ -24,7 +24,7 @@ class AuthTokenGenerator(metaclass=ABCMeta):
         return self.token_builder().write(**copied)
 
     def decode(self, s: str):
-        decoded = self.token_builder().write(s)
+        decoded = self.token_builder().read(s)
         try:
             issue = decoded[self.issue_key]
             expired = decoded['exp']

@@ -21,7 +21,7 @@ class UserStorageCreator(QueryCreator):
         :exception UserStorageAlreadyExists: 이미 해당 User Storage가 존재함
         """
         # root 지정
-        main_root = f'{SERVER["storage"]}/{user_id}'
+        main_root = f'{SERVER["storage"]}/storage/{user_id}'
         if os.path.isdir(main_root):
             # 이미 존재하는 경우
             if force:
@@ -32,8 +32,6 @@ class UserStorageCreator(QueryCreator):
                 raise UserStorageAlreadyExists()
         # 새로 구축
         os.mkdir(main_root)
-        # 파일/디렉토리가 저장될 주소
-        os.mkdir(f'{main_root}/storage')
         return main_root
 
 class UserStorageDestroyer(QueryDestroyer):

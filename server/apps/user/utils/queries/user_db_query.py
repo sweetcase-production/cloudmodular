@@ -9,6 +9,7 @@ from architecture.query.crud import (
     QueryDestroyer, 
     QueryReader
 )
+from core.exc import UserAlreadyExists
 from system.connection.generators import DatabaseGenerator
 
 
@@ -19,13 +20,14 @@ class UserDBQueryCreator(QueryCreator):
         session = DatabaseGenerator.get_session()
         q = session.query(User)
         # 동일한 name이나 email이 있으면 안된다.
-        assert q.filter(or_(
+        if q.filter(or_(
                     User.name == user_format.name, 
                     User.email == user_format.email
-                )).scalar() is None
-        if user_format.is_admin:
+                )).scalar():
+                raise UserAlreadyExists()
+        if user_format.is_admin and q.filter(User.is_admin == True).scalar():
             # admin은 단 하나만 생성할 수 있다.
-            assert q.filter(User.is_admin == True).scalar() is None
+            raise PermissionError()
         try:
             # DB 업로드
             user: User = User(**(user_format.dict()))
