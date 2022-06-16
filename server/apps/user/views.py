@@ -5,7 +5,7 @@ import json
 from apps.user.models import User
 from apps.user.schemas import UserRead
 from apps.user.utils.managers import UserManager
-from core.exc import UserAlreadyExists
+from core.exc import UserAlreadyExists, UserNotFound
 
 
 user_router = APIRouter(
@@ -18,9 +18,9 @@ class UserView:
 
     """
     (POST)  /api/user           # 생성
-    (GET)   /api/user/{name}    # 유저 정보 가지고오기
-    (PATCH) /api/user/{name}    # 유저 정보 업데이트하기
-    (DELETE)/api/user/{name}    # 유저 삭제하기
+    (GET)   /api/user/{id}      # 유저 정보 가지고오기
+    (PATCH) /api/user/{id}      # 유저 정보 업데이트하기
+    (DELETE)/api/user/{id}      # 유저 삭제하기
     """
     @staticmethod
     @user_router.post(
@@ -77,6 +77,44 @@ class UserView:
                 detail='server error')
         else:
             return user
+
+    
+    @staticmethod
+    @user_router.get(
+        path='/{pk}',
+        status_code=status.HTTP_200_OK,
+        response_model=UserRead)
+    def get_user(request: Request, pk: int):
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            # 사용자 검색하기
+            user: User = UserManager().read_user(token, pk)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='권한이 없습니다.')
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='검색 대상의 사용자가 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            return user
+
 
 class UserSearchView:
     """

@@ -6,6 +6,7 @@ from apps.user.utils.queries.user_db_query import UserDBQuery
 from apps.user.utils.queries.user_storage_query import UserStorageQuery
 from architecture.manager.backend_manager import CRUDManager
 from architecture.manager.base_manager import FrontendManager
+from core.exc import UserNotFound
 from core.permissions import (
     PermissionAdminChecker as AdminOnly,
     PermissionIssueLoginChecker as LoginedOnly,
@@ -50,7 +51,7 @@ class UserCRUDManager(CRUDManager):
         user_name: Optional[str] = None,
         user_email: Optional[str] = None,
         user_id: Optional[int] = None
-    ):
+    ) -> Optional[User]:
         return UserDBQuery().read(
             user_name=user_name,
             user_email=user_email,
@@ -106,3 +107,25 @@ class UserManager(FrontendManager):
             passwd=passwd,
             storage_size=storage_size
         )
+
+    def read_user(self, token: str, pk: str) -> User:
+        try:
+            # token에서 해당 유저 정보를 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        # Email에 대한 유저가 존재하지 않으면 Permisson Failed
+        operator: User = UserCRUDManager().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+        if not bool(LoginedOnly(issue)):
+            # Login 상태가 아니면 Permisson Failed
+            raise PermissionError()
+        # User 검색, 없으면 None
+        user: User = UserCRUDManager().read(user_id=pk)
+        if not user:
+            # 검색 대상의 사용자가 없음
+            raise UserNotFound()
+        return user

@@ -2,7 +2,6 @@ import pytest
 import os
 from fastapi import status
 from fastapi.testclient import TestClient
-import threading
 
 from main import app
 from system.bootloader import Bootloader
@@ -35,7 +34,7 @@ def api():
         'passwd': 'passwd0123',
         'storage_size': 10,
     }
-    a = UserCRUDManager().create(**client_info)
+    UserCRUDManager().create(**client_info)
     # Return test api
     yield TestClient(app)
     # Remove All Of Data
