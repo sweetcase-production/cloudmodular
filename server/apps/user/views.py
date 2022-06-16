@@ -84,7 +84,7 @@ class UserView:
         path='/{pk}',
         status_code=status.HTTP_200_OK,
         response_model=UserRead)
-    def get_user(request: Request, pk: int):
+    async def get_user(request: Request, pk: int):
         try:
             # 토큰 가져오기
             token = request.headers['token']
@@ -119,7 +119,7 @@ class UserView:
     @user_router.delete(
         path='/{pk}',
         status_code=status.HTTP_204_NO_CONTENT)
-    def remove_user(request: Request, pk: int):
+    async def remove_user(request: Request, pk: int):
         try:
             # 토큰 가져오기
             token = request.headers['token']
@@ -127,7 +127,7 @@ class UserView:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='요청 토큰이 없습니다.')
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
@@ -143,11 +143,11 @@ class UserView:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='검색 대상의 사용자가 없습니다.')
-        except Exception as e:
-            import traceback
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
+
 
 class UserSearchView:
     """
