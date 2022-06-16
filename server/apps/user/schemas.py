@@ -7,7 +7,6 @@ class UserBase(BaseModel):
 
     email: str
     name: str
-    passwd: str
     storage_size: int
     is_admin: bool
 
@@ -25,13 +24,6 @@ class UserBase(BaseModel):
             raise ValueError('알맞은 이름이 아닙니다.')
         return name
 
-    @validator('passwd')
-    def validate_passwd(cls, passwd: str):
-        # 8자 이상
-        if not (8 <= len(passwd) <= 32):
-            raise ValueError('패스워드가 맞지 않습니다.')
-        return passwd
-
     @validator('storage_size')
     def validate_storage_size(cls, storage_size: int):
         # 1 GB이상 20GB 이하 (차후에 변경 예정)
@@ -40,7 +32,14 @@ class UserBase(BaseModel):
         return storage_size
 
 class UserCreate(UserBase):
-    pass
+    passwd: str
+
+    @validator('passwd')
+    def validate_passwd(cls, passwd: str):
+        # 8자 이상
+        if not (8 <= len(passwd) <= 32):
+            raise ValueError('패스워드가 맞지 않습니다.')
+        return passwd
 
 
 class UserRead(UserBase):
