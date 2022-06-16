@@ -28,7 +28,6 @@ pydantic==1.9.1
 PyJWT==2.4.0
 pyparsing==3.0.9
 pytest==7.1.2
-pytest-cov==3.0.0
 pytest-dotenv==0.5.2
 python-dotenv==0.20.0
 PyYAML==6.0
