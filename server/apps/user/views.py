@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Request, status
 import pydantic
-from apps.user.models import User
+import json
 
+from apps.user.models import User
 from apps.user.schemas import UserRead
 from apps.user.utils.managers import UserManager
 from core.exc import UserAlreadyExists
@@ -34,7 +35,7 @@ class UserView:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='요청 토큰이 없습니다.')
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
@@ -42,10 +43,15 @@ class UserView:
         try:
             # 요청 데이터 가져오기
             req = await request.json()
-        except Exception:
+        except json.decoder.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='요청 데이터가 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
         try:
             # 사용자 추가하기
             user: User = UserManager().create_user(token=token, **req)
@@ -65,7 +71,7 @@ class UserView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='해당 정보를 가진 사용자가 이미 존재합니다.')
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')

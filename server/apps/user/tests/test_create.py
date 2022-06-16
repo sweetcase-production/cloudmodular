@@ -52,6 +52,23 @@ def test_failed_because_no_login(api: TestClient):
     res = api.post('/api/user', json=req)
     res.status_code = status.HTTP_403_FORBIDDEN
 
+def test_all_omit_req_data(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.post('/api/user', headers={'token': token})
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+def test_some_omit_req_data(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    req = {
+        'email': 'themail@gmail.com',
+        'name': 'JooHyun',
+        'storage_size': 4,
+    }
+    res = api.post('/api/user', json=req, headers={'token': token})
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
 def test_failed_no_admin(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
