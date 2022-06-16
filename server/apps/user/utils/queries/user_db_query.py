@@ -9,7 +9,7 @@ from architecture.query.crud import (
     QueryDestroyer, 
     QueryReader
 )
-from core.exc import UserAlreadyExists
+from core.exc import UserAlreadyExists, UserNotFound
 from system.connection.generators import DatabaseGenerator
 
 
@@ -89,8 +89,12 @@ class UserDBQueryDestroyer(QueryDestroyer):
             if user_id:
                 user = q.filter(User.id == user_id).scalar()    
             # 모든 DB데이터 삭제
-            q.filter(user.id == user.id).delete()
-            session.commit()
+            if user:
+                q.filter(User.id == user.id).delete()
+                session.commit()
+            else:
+                # 삭제 대상의 유저가 없는 경우
+                raise UserNotFound()
         except Exception as e:
             session.rollback()
             raise e

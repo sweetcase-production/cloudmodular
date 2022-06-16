@@ -37,7 +37,7 @@ class UserStorageCreator(QueryCreator):
 class UserStorageDestroyer(QueryDestroyer):
     def __call__(self, user_id: int):
 
-        main_root = f'{SERVER["storage"]}/{user_id}'
+        main_root = f'{SERVER["storage"]}/storage/{user_id}'
         shutil.rmtree(main_root)
 
 

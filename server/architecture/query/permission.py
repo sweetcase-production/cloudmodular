@@ -26,6 +26,9 @@ class PermissionChecker(metaclass=ABCMeta):
             o.checked = True
         return o
 
+    def __invert__(self):
+        self.checked = not self.checked
+        return self
 
 class PermissionSameUserChecker(PermissionChecker):
     """

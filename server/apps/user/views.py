@@ -115,6 +115,39 @@ class UserView:
         else:
             return user
 
+    @staticmethod
+    @user_router.delete(
+        path='/{pk}',
+        status_code=status.HTTP_204_NO_CONTENT)
+    def remove_user(request: Request, pk: int):
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='요청 토큰이 없습니다.')
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        
+        try:
+            # 유저 삭제하기
+            UserManager().remove_user(token, pk)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='권한이 없습니다.')
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='검색 대상의 사용자가 없습니다.')
+        except Exception as e:
+            import traceback
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
 
 class UserSearchView:
     """

@@ -11,6 +11,7 @@ from core.permissions import (
     PermissionAdminChecker as AdminOnly,
     PermissionIssueLoginChecker as LoginedOnly,
 )
+from architecture.query.permission import PermissionSameUserChecker as SameOnly
 from core.token_generators import LoginTokenGenerator
 
 class UserCRUDManager(CRUDManager):
@@ -129,3 +130,26 @@ class UserManager(FrontendManager):
             # 검색 대상의 사용자가 없음
             raise UserNotFound()
         return user
+
+    def remove_user(self, token: str, pk: str):
+        try:
+            # token에서 해당 유저 정보를 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        # Email에 대한 유저가 존재하지 않으면 Permisson Failed
+        operator: User = UserCRUDManager().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+        # Login상태 and Admin이 아니면 다른 유저를 삭제할 수 없다
+        # 그리고 Admin이 자신을 삭제할 수 없다.
+        if not bool(
+            AdminOnly(operator.is_admin) 
+            & LoginedOnly(issue) 
+            & (~SameOnly(operator.id, pk))
+        ):
+            raise PermissionError()
+        UserDBQuery().destroy(user_id=pk)
+        UserStorageQuery().destroy(user_id=pk)

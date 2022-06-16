@@ -58,3 +58,4 @@ def test_success(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(f'/api/user/{admin_info["id"]}', headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
+
