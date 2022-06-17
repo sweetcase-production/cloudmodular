@@ -1,5 +1,5 @@
 from sqlalchemy import or_
-from typing import Optional
+from typing import List, Optional
 
 from apps.user.models import User
 from apps.user.schemas import UserCreate, UserUpdate
@@ -8,6 +8,7 @@ from architecture.query.crud import (
     QueryCreator, 
     QueryDestroyer, 
     QueryReader,
+    QuerySearcher,
     QueryUpdator
 )
 from core.exc import UserAlreadyExists, UserNotFound
@@ -131,8 +132,25 @@ class UserDBQueryDestroyer(QueryDestroyer):
         finally:
             session.close()
 
+class UserDBQuerySearcher(QuerySearcher):
+    def __call__(self, page: int, page_size: int):
+        start = page_size * (page - 1)
+        session = DatabaseGenerator.get_session()
+        q = session.query(User)
+        try:
+            users: List[User] = \
+                q.order_by(User.created.asc()) \
+                    .offset(start).limit(page_size).all()
+        except Exception as e:
+            raise e
+        else:
+            return users
+        finally:
+            session.close()
+
 class UserDBQuery(QueryCRUD):
     reader = UserDBQueryReader
     creator = UserDBQueryCreator
     destroyer = UserDBQueryDestroyer
     updator = UserDBQueryUpdator
+    searcher = UserDBQuerySearcher

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from apps.user.models import User
 from apps.user.schemas import UserCreate, UserUpdate
@@ -83,12 +83,15 @@ class UserCRUDManager(CRUDManager):
             user_name=user_name,
             user_email=user_email,
             user_id=user_id
-            
         )
         UserStorageQuery().destory(user_id=removed_id)
-    def search(self):
-        raise NotImplementedError
-
+    
+    def search(self, page: int, page_size: int) -> List[User]:
+        if not (1 <= page_size <= 20):
+            raise ValueError('페이지의 크기가 올바르지 않습니다.')
+        if not (page >= 1):
+            raise ValueError('페이지가 올바르지 않습니다.')
+        return UserDBQuery().search(page=page, page_size=page_size)
 
 class UserManager(FrontendManager):
 
@@ -190,3 +193,27 @@ class UserManager(FrontendManager):
             raise PermissionError()
         UserDBQuery().destroy(user_id=pk)
         UserStorageQuery().destroy(user_id=pk)
+
+    def search_users(self, token: str, page_size: str, page: str) -> List[User]:
+        try:
+            # token에서 해당 유저 정보를 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        # Email에 대한 유저가 존재하지 않으면 Permisson Failed
+        operator: User = UserCRUDManager().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+        # Permisson Check
+        if not bool(AdminOnly(operator.is_admin) & LoginedOnly(issue)):
+            raise PermissionError()
+        # page parameter Integer 변형
+        try:
+            page_size = int(page_size)
+            page = int(page)
+        except (TypeError, ValueError):
+            raise ValueError('파라미터의 자료형이 맞지 않습니다.')
+        # 검색
+        return UserCRUDManager().search(page=page, page_size=page_size)

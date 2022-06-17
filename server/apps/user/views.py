@@ -1,3 +1,4 @@
+from typing import List, Union
 from fastapi import APIRouter, HTTPException, Request, status
 import pydantic
 import json
@@ -11,6 +12,11 @@ from core.exc import UserAlreadyExists, UserNotFound
 user_router = APIRouter(
     prefix='/api/user',
     tags=['user'],
+    responses={404: {'error': 'Not Found'}}
+)
+user_search_router = APIRouter(
+    prefix='/api/user/search',
+    tags=['user', 'search'],
     responses={404: {'error': 'Not Found'}}
 )
 
@@ -213,4 +219,45 @@ class UserSearchView:
     """
     (GET)   /api/user/search    # 필터링으로 유저 검색하기
     """
-    pass
+    @staticmethod
+    @user_search_router.get(
+        path='',
+        status_code=status.HTTP_200_OK,
+        response_model=List[UserRead])
+    async def search_users(request: Request):
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        
+        try:
+            # 유저 데이터 가져오기
+            queries = request.query_params._dict
+            users: List[User] = \
+                UserManager().search_users(token=token, **queries)
+        except TypeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='요청 데이터의 일부가 빠졌습니다.')
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='권한이 없습니다.')
+        except ValueError as e:
+            # 검색 쿼리 Validation Error
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e))
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            return users
