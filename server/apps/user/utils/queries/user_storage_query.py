@@ -32,6 +32,7 @@ class UserStorageCreator(QueryCreator):
                 raise UserStorageAlreadyExists()
         # 새로 구축
         os.mkdir(main_root)
+        os.mkdir(f'{main_root}/root')   # 파일/디렉토리가 저장되는 곳
         return main_root
 
 class UserStorageDestroyer(QueryDestroyer):

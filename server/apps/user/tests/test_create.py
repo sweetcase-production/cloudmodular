@@ -190,6 +190,6 @@ def test_success(api: TestClient):
 
     # 디렉토리 확인
     from settings.base import SERVER
-    main_root = f'{SERVER["storage"]}/storage/{res.json()["id"]}'
+    main_root = f'{SERVER["storage"]}/storage/{res.json()["id"]}/root'
     
     assert os.path.isdir(main_root)
