@@ -1,12 +1,13 @@
 import os
 import shutil
 
-from typing import Optional
+from typing import Dict, List, Optional
 from fastapi import UploadFile
 from architecture.query.crud import (
     QueryCRUD, 
     QueryCreator, 
-    QueryDestroyer
+    QueryDestroyer,
+    QueryReader
 )
 
 
@@ -38,6 +39,39 @@ class DataStorageQueryCreator(QueryCreator):
                 while s := file.file.read(segment_size):
                     f.write(s)
 
+class DataStorageQueryReader(QueryReader):
+    def __call__(self, root: str, is_dir: bool) -> Optional[Dict]:
+        if is_dir:
+            # directory
+            if not os.path.isdir(root):
+                return None
+            else:
+                filenames: List[str] = os.scandir(root)
+                files = []
+                for filename in filenames:
+                    f = {
+                        'is_dir': None,
+                        'filename': filename,
+                    }
+                    file_root = f'{root}/{filename}'
+                    if os.path.isdir(file_root):
+                        f['is_dir'] = True
+                    else:
+                        f['is_dir'] = False
+                    files.append(f)
+                return {
+                    'size': len(files),
+                    'files': files,
+                }
+        else:
+            # file
+            if not os.path.isfile(root):
+                return None
+            else:
+                return {
+                    'size': os.path.getsize(root),
+                }
+
 class DataStorageQueryDestroyer(QueryDestroyer):
     def __call__(self, root: str, is_dir: bool):
         if is_dir:
@@ -49,4 +83,5 @@ class DataStorageQueryDestroyer(QueryDestroyer):
 
 class DataStorageQuery(QueryCRUD):
     creator = DataStorageQueryCreator
-    destroyer: DataStorageQueryDestroyer
+    destroyer = DataStorageQueryDestroyer
+    reader =  DataStorageQueryReader

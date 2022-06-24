@@ -1,4 +1,5 @@
 import json
+import traceback
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 import pydantic

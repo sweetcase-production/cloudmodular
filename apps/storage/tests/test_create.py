@@ -91,6 +91,8 @@ def test_request_nothing(api: TestClient):
 def test_admin_try_to_upload_no_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
+    # File
     res = api.post(
         f'/api/data/99999999999/0',
         headers={'token': token},
@@ -101,9 +103,19 @@ def test_admin_try_to_upload_no_user(api: TestClient):
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
-def test_upload_in_no_exists_root(api: TestClient):
+    # Directory
+    res = api.post(
+        f'/api/data/99999999999/0',
+        headers={'token': token},
+        json={'dirname': 'mydir'}
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+def test_fileupload_in_no_exists_root(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
+    
+    # File
     res = api.post(
         f'/api/data/{client_info["id"]}/999999999999999999',
         headers={'token': token},
@@ -111,6 +123,14 @@ def test_upload_in_no_exists_root(api: TestClient):
             ('files', (f1.name, f1)), 
             ('files', (f2.name, f2))
         ]
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+    # Directory
+    res = api.post(
+        f'/api/data/{client_info["id"]}/999999999999999999',
+        headers={'token': token},
+        json={'dirname': 'mydir'}
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 

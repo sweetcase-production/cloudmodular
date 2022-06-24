@@ -68,7 +68,7 @@ class DataDBQueryReader(QueryReader):
         is_dir: bool,
         data_id: Optional[int] = None,
         full_root: Optional[Sequence[str]] = None
-    ):
+    ) -> DataInfo:
         session = DatabaseGenerator.get_session()
         q = session.query(DataInfo)
 

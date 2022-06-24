@@ -128,36 +128,58 @@ class DataDirectoryCRUDManager(CRUDManager):
                 raise DataNotFound()
             dir_root = f'{directory_info.root}{directory_info.name}/'
         
-        if DataDBQuery().read(
+        # DB에 해당 루트의 데이터가 있는 지 확인
+        db_record = DataDBQuery().read(
             user_id=user_id,
             is_dir=True,
             full_root=(dir_root, dirname)
-        ):
+        )
+
+        # Storage에 데이터가 있는 지 확인
+        root = f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{dirname}'
+        storage_record = DataStorageQuery().read(
+            root=root, is_dir=True)
+
+        if db_record and storage_record:
             # 생성하고자 하는 디렉토리가 이미 존재하는 경우
             raise DataAlreadyExists()
-
-        # 디렉토리 DB 생성
-        create_format: DataInfoCreate = DataInfoCreate(
-            name=dirname,
-            root=dir_root,
-            user_id=user_id,
-            is_dir=True
-        )
-        data_info: DataInfo = DataDBQuery().create(create_format)
-
-        # Storage에 디렉토리 생성
-        try:
-            DataStorageQuery().create(
-                root=f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{dirname}',
+        elif db_record:
+            # DB에만 있고 Storage에는 없음
+            # Storage만 생성
+            try:
+                DataStorageQuery().create(root=root, is_dir=True)
+            except Exception as e:
+                # 실패 시 Storage 삭제
+                DataDBQuery().destroy(db_record.id)
+                raise e
+            return [db_record]
+        elif storage_record:
+            # Storage에만 있고 DB에는 없음
+            # DB 생성하고 DataAlreadyExists 호출
+            create_format: DataInfoCreate = DataInfoCreate(
+                name=dirname,
+                root=dir_root,
+                user_id=user_id,
                 is_dir=True
             )
-        except Exception as e:
-            # 실패 시 DB 삭제
-            DataDBQuery().destroy(data_info.id)
-            raise e
+            DataDBQuery().create(create_format)
+            raise DataAlreadyExists()
+            
         else:
-            # 성공
-            return [data_info]
+            # 정상적인 새로 생성
+            # DB, Storage 생성
+            db_record = DataDBQuery().create(DataInfoCreate(
+                name=dirname,
+                root=dir_root,
+                user_id=user_id,
+                is_dir=True
+            ))
+            try:
+                DataStorageQuery().create(root=root, is_dir=True)
+            except Exception as e:
+                DataDBQuery().destroy(db_record.id)
+                raise e
+            return [db_record]
         
 
     def update(self, *args, **kwargs):
@@ -218,6 +240,3 @@ class DataManager(FrontendManager):
                 user_id=user_id,
                 dirname=req_dirname
             )
-        else:
-            # 아무것도 없는 경우
-            raise ValueError('요청 데이터가 없습니다.')
