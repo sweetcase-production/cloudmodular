@@ -9,3 +9,11 @@ class UserNotFound(Exception):
 class UserAlreadyExists(Exception):
     def __init__(self):
         super().__init__("User Already Exists")
+
+class DataAlreadyExists(Exception):
+    def __init__(self):
+        super().__init__("Data Already Exists")
+
+class DataNotFound(Exception):
+    def __init__(self):
+        super().__init__("Data Not Found")

@@ -3,7 +3,6 @@ from typing import Dict, Any, Type
 
 from architecture.manager.base_manager import BackendManager
 from architecture.query.auth import AuthTokenGenerator
-from architecture.query.crud import QueryCRUD
 
 
 class CRUDManager(BackendManager, ABC):

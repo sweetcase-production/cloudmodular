@@ -1,5 +1,4 @@
 import os
-from re import L
 import shutil
 
 from settings.base import SERVER, DATABASE
@@ -48,6 +47,7 @@ class Bootloader:
         
         # 생성 할 테이블 Import
         from apps.user.models import User
+        from apps.storage.models import DataInfo
 
         Base = DatabaseGenerator.get_base()
         db_engine = DatabaseGenerator.get_engine()
@@ -65,7 +65,9 @@ class Bootloader:
             os.remove('data.db')
         else:
             from apps.user.models import User
+            from apps.storage.models import DataInfo
             session = DatabaseGenerator.get_session()
+            session.query(DataInfo).filter(DataInfo.id >= 0).delete()
             session.query(User).filter(User.id >= 0).delete()
             session.commit()
 
