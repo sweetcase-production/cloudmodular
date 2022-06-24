@@ -342,6 +342,10 @@ def test_file_upload(api: TestClient):
             'created': output[1]['created']
         }
     ]
+    
+    # 파일 생성 확인
+    assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt')
+    assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi2.txt')
 
 def test_rewrite_file(api: TestClient):
     # 같은 이릉의 파일 업로드일 경우, 덮어쓰기 가능
@@ -357,3 +361,6 @@ def test_rewrite_file(api: TestClient):
         ]
     )
     assert res.status_code == status.HTTP_201_CREATED
+
+    # 파일 존재 확인
+    assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt')
