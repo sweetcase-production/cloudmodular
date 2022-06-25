@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import UploadFile
-
+from sqlalchemy import and_
 
 from apps.storage.models import DataInfo
 from apps.storage.schemas import DataInfoCreate
@@ -24,6 +24,7 @@ from architecture.query.permission import (
 )
 from architecture.manager.base_manager import FrontendManager
 from settings.base import SERVER
+from system.connection.generators import DatabaseGenerator
 
 class DataFileCRUDManager(CRUDManager):
 
@@ -54,7 +55,6 @@ class DataFileCRUDManager(CRUDManager):
                 raise DataNotFound()
             dir_root = f'{directory_info.root}{directory_info.name}/'
         
-        
         # File 돌면서 차례대로 생성 및 덮어쓰기
         for file in files:
             filename = file.filename.split('/')[-1]
@@ -62,7 +62,13 @@ class DataFileCRUDManager(CRUDManager):
             file_root = \
                 f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{filename}'
 
-            # 상위 디렉토리가 존재하는 지 확인하기
+            """
+            같은 이름, 같은 루트, 같은 이용자의 파일관련 데이터가 있는 지
+            확인하기.
+            존재하는 경우는, 해당 파일이 부적절한 방법으로 지워진 경우이다.
+            이때 DB 데이터를 삭제해서 에러호출을 하는 것이 아닌
+            그냥 파일을 새로 만든다.
+            """
             data_info: DataInfo = DataDBQuery().read(
                 user_id=user_id, full_root=(dir_root, filename),
                 is_dir=False
@@ -81,9 +87,9 @@ class DataFileCRUDManager(CRUDManager):
                     # 에러발생시 Pass
                     # TODO 추후에 에러 상태를 출력 또는 저장하는 기능을 추가해야 한다.
                     continue
-            # 파일 생성
-            # 기존에 존재하는 파일은 덮어쓴다.
             try:
+                # 파일 생성
+                # 기존에 존재하는 파일은 덮어쓴다.
                 DataStorageQuery().create(root=file_root, is_dir=False, file=file)
             except Exception as e:
                 # 실패 시 저장했던 DB 데이터를 삭제한다
@@ -108,7 +114,7 @@ class DataFileCRUDManager(CRUDManager):
 
 class DataDirectoryCRUDManager(CRUDManager):
 
-    def create(self, root_id: int, user_id: int, dirname: str) -> List[DataInfo]:
+    def create(self, root_id: int, user_id: int, dirname: str) -> DataInfo:
 
         # User 존재 여부 확인
         user: User = UserDBQuery().read(user_id=user_id)
@@ -145,25 +151,57 @@ class DataDirectoryCRUDManager(CRUDManager):
             raise DataAlreadyExists()
         elif db_record:
             # DB에만 있고 Storage에는 없음
-            # Storage만 생성
+            session = DatabaseGenerator.get_session()
+            query = session.query(DataInfo)
             try:
+                # 해당 디렉토리의 하위의 모든 DB 삭제
+                query.filter(and_(
+                    DataInfo.user_id == user_id,
+                    DataInfo.root.startswith(f'{dir_root}{dirname}/')
+                )).delete(synchronize_session='fetch')
+                session.commit()
+            except Exception as e:
+                raise e
+            finally:
+                session.close()
+
+            try:
+                # Storage만 생성
                 DataStorageQuery().create(root=root, is_dir=True)
             except Exception as e:
                 # 실패 시 Storage 삭제
                 DataDBQuery().destroy(db_record.id)
                 raise e
-            return [db_record]
+            return db_record
         elif storage_record:
             # Storage에만 있고 DB에는 없음
-            # DB 생성하고 DataAlreadyExists 호출
+            # 해당 디렉토리의 하위 DB데이터 전부 다 삭제
+            # 해당 디렉토리의 하위 파일 및 디렉토리 전부 다 삭제
+            # TODO 하위 데이터까지 복구하는 프로세스를 목적으로 구현 필요
+            session = DatabaseGenerator.get_session()
+            query = session.query(DataInfo)
+            try:
+                # DB 삭제
+                query.filter(and_(
+                    DataInfo.user_id == user_id,
+                    DataInfo.root.startswith(f'{dir_root}{dirname}/')
+                )).delete(synchronize_session='fetch')
+                session.commit()
+            except Exception as e:
+                raise e
+            finally:
+                session.close()
+            # Storage 삭제
+            DataStorageQuery().destroy(root=root, is_dir=True)
+
+            # 다시 생성
             create_format: DataInfoCreate = DataInfoCreate(
                 name=dirname,
                 root=dir_root,
                 user_id=user_id,
                 is_dir=True
             )
-            DataDBQuery().create(create_format)
-            raise DataAlreadyExists()
+            return DataDBQuery().create(create_format)
             
         else:
             # 정상적인 새로 생성
@@ -179,7 +217,7 @@ class DataDirectoryCRUDManager(CRUDManager):
             except Exception as e:
                 DataDBQuery().destroy(db_record.id)
                 raise e
-            return [db_record]
+            return db_record
         
 
     def update(self, *args, **kwargs):
@@ -235,8 +273,8 @@ class DataManager(FrontendManager):
             )
         elif req_dirname:
             # 디렉토리 생성
-            return DataDirectoryCRUDManager().create(
+            return [DataDirectoryCRUDManager().create(
                 root_id=data_id,
                 user_id=user_id,
                 dirname=req_dirname
-            )
+            )]
