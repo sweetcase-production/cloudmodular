@@ -1,6 +1,8 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from fastapi import UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy import and_
+import os
 
 from apps.storage.models import DataInfo
 from apps.storage.schemas import DataInfoCreate
@@ -100,10 +102,11 @@ class DataFileCRUDManager(CRUDManager):
                 res.append(data_info)
         return res
 
-    def update(self, *args, **kwargs):
+    def read(self, user_id: int, raw_root: str):
+        # 다운로드 할 때만 사용
         raise NotImplementedError()
-    
-    def read(self, *args, **kwargs):
+
+    def update(self, *args, **kwargs):
         raise NotImplementedError()
     
     def destroy(self, *args, **kwargs):
@@ -135,7 +138,7 @@ class DataDirectoryCRUDManager(CRUDManager):
             dir_root = f'{directory_info.root}{directory_info.name}/'
         
         # DB에 해당 루트의 데이터가 있는 지 확인
-        db_record = DataDBQuery().read(
+        db_record: DataInfo = DataDBQuery().read(
             user_id=user_id,
             is_dir=True,
             full_root=(dir_root, dirname)
@@ -151,19 +154,8 @@ class DataDirectoryCRUDManager(CRUDManager):
             raise DataAlreadyExists()
         elif db_record:
             # DB에만 있고 Storage에는 없음
-            session = DatabaseGenerator.get_session()
-            query = session.query(DataInfo)
-            try:
-                # 해당 디렉토리의 하위의 모든 DB 삭제
-                query.filter(and_(
-                    DataInfo.user_id == user_id,
-                    DataInfo.root.startswith(f'{dir_root}{dirname}/')
-                )).delete(synchronize_session='fetch')
-                session.commit()
-            except Exception as e:
-                raise e
-            finally:
-                session.close()
+            # 해당 디렉토리의 하위의 모든 DB 삭제
+            DataDBQuery().destroy(db_record.id)
 
             try:
                 # Storage만 생성
@@ -223,7 +215,8 @@ class DataDirectoryCRUDManager(CRUDManager):
     def update(self, *args, **kwargs):
         raise NotImplementedError()
     
-    def read(self, *args, **kwargs):
+    def read(self, user_id: int, raw_root: str):
+        # 다운로드 할 때만 사용
         raise NotImplementedError()
     
     def destroy(self, *args, **kwargs):
@@ -244,8 +237,8 @@ class DataManager(FrontendManager):
         req_dirname: Optional[str] = None
     ) -> List[DataInfo]:
         
-        # 토큰 정보 추출
         try:
+            # 토큰 정보 추출
             decoded_token = LoginTokenGenerator().decode(token)
             op_email = decoded_token['email']
             issue = decoded_token['iss']
@@ -278,3 +271,75 @@ class DataManager(FrontendManager):
                 user_id=user_id,
                 dirname=req_dirname
             )]
+
+    def read(self, token: str, user_id: int, data_id: int, mode: str = 'info') -> Dict[str, Any]:
+        
+        try:
+            # 토큰 정보 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        operator: User = UserDBQuery().read(user_email=op_email)
+        # 해당 User 없으면 PermissionError
+        if not operator:
+            raise PermissionError()
+        # Admin이거나, client and 자기 자신이어야 한다
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | 
+                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, user_id))
+            )
+        ):
+            raise PermissionError()
+
+        if not UserDBQuery().read(user_id=user_id):
+            # user_id에 대한 정보가 존재하는 지 확인
+            raise UserNotFound()
+
+        try:
+            # DB에 데이터 검색
+            data_info: DataInfo = \
+                DataDBQuery().read(user_id=user_id, data_id=data_id)
+        except Exception as e:
+            raise e
+        if not data_info:
+            # 데이터 없음
+            raise DataNotFound()
+
+        # 실제 루트
+        raw_root = \
+            f'{SERVER["storage"]}/storage/{user_id}/root{data_info.root}{data_info.name}'
+
+        # 스토리지 데이터 확인
+        storage_info = \
+            DataStorageQuery().read(
+                root=raw_root, is_dir=data_info.is_dir)
+
+        if not storage_info:
+            # 실제 스토리지에 존재하지 않음
+            DataDBQuery().destroy(data_info.id)
+            raise DataNotFound()
+
+        # 리턴 데이터
+        res = {
+            'info': {
+                'root': data_info.root,
+                'is_dir': data_info.is_dir,
+                'name': data_info.name,
+                'size': len(os.listdir(raw_root)) if data_info.is_dir \
+                    else os.path.getsize(raw_root)
+            }
+        }
+
+        if mode == 'download':
+            # TODO 추가 구현 필요
+            if not data_info.is_dir:
+                res['file'] = FileResponse(raw_root)
+            else:
+                # TODO 디렉토리일 경우, 추가 tmp파일
+                pass
+        else:
+            return res
+            

@@ -1,3 +1,4 @@
+from multiprocessing import synchronize
 from sqlalchemy import and_
 from typing import Optional, Sequence
 
@@ -53,7 +54,17 @@ class DataDBQueryDestroyer(QueryDestroyer):
         
         data: DataInfo = q.filter(DataInfo.id == data_id).scalar()
         try:
-            q.filter(DataInfo.id == data_id).delete()
+            if not data.is_dir:
+                # 파일
+                q.filter(DataInfo.id == data_id).delete()
+            else:
+                # 디렉토리
+                # 하위 데이터 전부 삭제
+                q.filter(and_(
+                    DataInfo.user_id == data.user_id,
+                    DataInfo.root.startswith(f'{data.root}{data.name}/')
+                )).delete(synchronize_session='fetch')
+            session.commit()
         except Exception as e:
             session.rollback()
             raise e
@@ -65,7 +76,7 @@ class DataDBQueryDestroyer(QueryDestroyer):
 class DataDBQueryReader(QueryReader):
     def __call__(
         self, user_id: int,
-        is_dir: bool,
+        is_dir: Optional[bool] = None,
         data_id: Optional[int] = None,
         full_root: Optional[Sequence[str]] = None
     ) -> DataInfo:
@@ -89,10 +100,10 @@ class DataDBQueryReader(QueryReader):
             session.rollback()
             raise e
         else:
-            if data and data.is_dir != is_dir:
-                return None
-            else:
-                return data
+            if is_dir:
+                if data and data.is_dir != is_dir:
+                    return None
+            return data
         finally:
             session.close()
 
