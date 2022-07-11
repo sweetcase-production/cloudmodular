@@ -18,10 +18,10 @@ storage_router = APIRouter(
 class StorageView:
 
     """
-    (POST)      /api/data/{user_id}/{data_id}   파일/디렉토리 생성
-    (GET)       /api/data/{user_id}/{data_id}   파일/디렉토리 기본 정보
-    (PATCH)     /api/data/{user_id}/{data_id}   파일/디렉토리 이름 수정
-    (DELETE)    /api/data/{user_id}/{data_id}   파일/디렉토리 삭제
+    (POST)      /api/users/{user_id}/datas/{data_id}    파일/디렉토리 생성
+    (GET)       /api/users/{user_id}/datas/{data_id}    파일/디렉토리 기본 정보
+    (PATCH)     /api/users/{user_id}/datas/{data_id}    파일/디렉토리 이름 수정
+    (DELETE)    /api/users/{user_id}/datas/{data_id}    파일/디렉토리 삭제
     """
 
 

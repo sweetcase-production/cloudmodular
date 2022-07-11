@@ -23,10 +23,10 @@ user_search_router = APIRouter(
 class UserView:
 
     """
-    (POST)  /api/user           # 생성
-    (GET)   /api/user/{id}      # 유저 정보 가지고오기
-    (PATCH) /api/user/{id}      # 유저 정보 업데이트하기
-    (DELETE)/api/user/{id}      # 유저 삭제하기
+    (POST)  /api/users           # 생성
+    (GET)   /api/users/{id}      # 유저 정보 가지고오기
+    (PATCH) /api/users/{id}      # 유저 정보 업데이트하기
+    (DELETE)/api/users/{id}      # 유저 삭제하기
     """
     @staticmethod
     @user_router.post(
@@ -217,7 +217,7 @@ class UserView:
 
 class UserSearchView:
     """
-    (GET)   /api/user/search    # 필터링으로 유저 검색하기
+    (GET)   /api/users/search    # 필터링으로 유저 검색하기
     """
     @staticmethod
     @user_search_router.get(
