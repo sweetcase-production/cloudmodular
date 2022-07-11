@@ -39,7 +39,7 @@ class UserView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -67,7 +67,7 @@ class UserView:
                 detail='요청 데이터의 일부가 빠져있습니다.')
         except PermissionError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='권한이 없습니다.')
         except pydantic.ValidationError as e:
             raise HTTPException(
@@ -96,7 +96,7 @@ class UserView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -108,7 +108,7 @@ class UserView:
             user: User = UserManager().read_user(token, pk)
         except PermissionError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='권한이 없습니다.')
         except UserNotFound:
             raise HTTPException(
@@ -132,7 +132,7 @@ class UserView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -164,7 +164,7 @@ class UserView:
                 detail='요청 데이터의 일부가 빠져있습니다.')
         except PermissionError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='권한이 없습니다.')
         except UserNotFound:
             raise HTTPException(
@@ -191,7 +191,7 @@ class UserView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -203,7 +203,7 @@ class UserView:
             UserManager().remove_user(token, pk)
         except PermissionError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='권한이 없습니다.')
         except UserNotFound:
             raise HTTPException(
@@ -230,7 +230,7 @@ class UserSearchView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -248,7 +248,7 @@ class UserSearchView:
                 detail='요청 데이터의 일부가 빠졌습니다.')
         except PermissionError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='권한이 없습니다.')
         except ValueError as e:
             # 검색 쿼리 Validation Error

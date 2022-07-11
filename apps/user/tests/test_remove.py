@@ -45,14 +45,14 @@ def api():
 
 def test_no_token(api: TestClient):
     res = api.delete(f'/api/users/{admin_info["id"]}')
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_no_admin(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     
     res = api.delete(f'/api/users/{admin_info["id"]}', headers={'Token': token})
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_user_not_exists(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
@@ -89,4 +89,4 @@ def test_remove_admin_user(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     res = api.delete(f'/api/users/{admin_info["id"]}', headers={'Token': token})
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED

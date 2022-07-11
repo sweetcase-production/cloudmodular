@@ -34,7 +34,7 @@ class TokenGenerateView:
             else:
                 # 알 수 없는 요청
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                    status_code=status.HTTP_401_UNAUTHORIZED,
                     detail='알 수 없는 요청입니다.')
         except KeyError:
             raise HTTPException(

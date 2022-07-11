@@ -57,7 +57,7 @@ def api():
 
 def test_no_token(api: TestCase):
     res = api.patch(f'/api/users/{client_info1["id"]}')
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_not_admin(api: TestCase):
     email, passwd = client_info1['email'], client_info1['passwd']
@@ -71,7 +71,7 @@ def test_not_admin(api: TestCase):
         f'/api/users/{client_info2["id"]}', 
         json=req, headers={'token': token}
     )
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_omit_all_req(api: TestCase):
     email, passwd = admin_info['email'], admin_info['passwd']

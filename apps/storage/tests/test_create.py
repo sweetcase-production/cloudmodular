@@ -67,7 +67,7 @@ def test_no_token(api: TestClient):
             ('files', (f2.name, f2))
         ]
     )
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_client_try_other_storage(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
@@ -77,7 +77,7 @@ def test_client_try_other_storage(api: TestClient):
         json={'dirname': 'mydir'},
         headers={'token': token}
     )
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_request_nothing(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']

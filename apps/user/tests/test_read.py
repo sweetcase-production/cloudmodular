@@ -45,7 +45,7 @@ def api():
 
 def test_no_token(api: TestClient):
     res = api.get(f'/api/users/{admin_info["id"]}')
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_uo_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']

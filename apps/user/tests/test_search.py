@@ -51,7 +51,7 @@ def api():
 
 def test_no_token(api: TestClient):
     res = api.get('/api/users/search')
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_no_admin(api: TestClient):
     email, passwd = accounts[1]['email'], accounts[1]['passwd']
@@ -60,7 +60,7 @@ def test_no_admin(api: TestClient):
     res = api.get(
         '/api/users/search',
         params={'page_size': 3, 'page': 1}, headers={'Token': token})
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_without_paging(api: TestClient):
     email, passwd = accounts[0]['email'], accounts[0]['passwd']

@@ -131,7 +131,7 @@ def test_no_token(api: TestClient):
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
         params={'method': 'info'}
     )
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_other_access_failed(api: TestClient):
     email, passwd = other_info['email'], other_info['passwd']
@@ -141,7 +141,7 @@ def test_other_access_failed(api: TestClient):
         headers={'token': token},
         params={'method': 'info'}
     )
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_no_exists_data(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']

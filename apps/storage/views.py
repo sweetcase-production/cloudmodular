@@ -41,7 +41,7 @@ class StorageView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -84,7 +84,7 @@ class StorageView:
             )
         except PermissionError as e:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='접근 권한이 없습니다.')
         except pydantic.ValidationError as e:
             raise HTTPException(
@@ -130,7 +130,7 @@ class StorageView:
         if method not in ('info', 'download'):
             # 잘못된 method값
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='잘못된 접근 입니다.')
 
         try:
@@ -138,7 +138,7 @@ class StorageView:
             token = request.headers['token']
         except KeyError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
         except Exception:
             raise HTTPException(
@@ -150,7 +150,7 @@ class StorageView:
             data = DataManager().read(token, user_id, data_id)
         except PermissionError:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='접근 권한이 없습니다.')
         except UserNotFound:
             """

@@ -49,7 +49,7 @@ def test_no_login(api: TestClient):
         'storage_size': 4,
     }
     res = api.post('/api/users', json=req)
-    res.status_code = status.HTTP_403_FORBIDDEN
+    res.status_code = status.HTTP_401_UNAUTHORIZED
 
 def test_all_omit_req_data(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
@@ -81,7 +81,7 @@ def test_no_admin(api: TestClient):
         'storage_size': 4,
     }
     res = api.post('/api/users', json=req, headers={'token': token})
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 """
 TODO 다른 형태의 token발행 기능 구현하면 작성 예정
