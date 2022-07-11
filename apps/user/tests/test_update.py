@@ -56,7 +56,7 @@ def api():
     Bootloader.remove_database()
 
 def test_no_token(api: TestCase):
-    res = api.patch(f'/api/user/{client_info1["id"]}')
+    res = api.patch(f'/api/users/{client_info1["id"]}')
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 def test_not_admin(api: TestCase):
@@ -68,7 +68,7 @@ def test_not_admin(api: TestCase):
         'passwd': 'passwd134',
     }
     res = api.patch(
-        f'/api/user/{client_info2["id"]}', 
+        f'/api/users/{client_info2["id"]}', 
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_403_FORBIDDEN
@@ -78,7 +78,7 @@ def test_omit_all_req(api: TestCase):
     token = AppAuthManager().login(email, passwd)
 
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -89,7 +89,7 @@ def test_omit_some_req(api: TestCase):
 
     req = dict()
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         headers={'token': token},
         json=req
     )
@@ -97,7 +97,7 @@ def test_omit_some_req(api: TestCase):
 
     req['name'] = 'changed1'
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         headers={'token': token},
         json=req
     )
@@ -106,7 +106,7 @@ def test_omit_some_req(api: TestCase):
     del req['name']
     req['passwd'] = 'abcdefsfd'
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         headers={'token': token},
         json=req
     )
@@ -121,7 +121,7 @@ def test_user_not_exists(api: TestCase):
         'passwd': 'passwd134',
     }
     res = api.patch(
-        f'/api/user/0',
+        f'/api/users/0',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
@@ -135,21 +135,21 @@ def test_name_validation_failed(api: TestCase):
         'passwd': 'passwd134',
     }
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req['name'] = 'a'*33
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req['name'] = 'aaaㅎㅇaaa'
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -163,14 +163,14 @@ def test_passwd_validation_failed(api: TestCase):
         'passwd': 'a'*7,
     }
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req['passwd'] = 'a'*33
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -184,7 +184,7 @@ def test_change_success(api: TestCase):
         'passwd': 'passwd134',
     }
     res = api.patch(
-        f'/api/user/{client_info1["id"]}',
+        f'/api/users/{client_info1["id"]}',
         json=req, headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK

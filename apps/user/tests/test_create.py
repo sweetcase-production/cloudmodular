@@ -48,14 +48,14 @@ def test_no_login(api: TestClient):
         'passwd': 'passwd01234',
         'storage_size': 4,
     }
-    res = api.post('/api/user', json=req)
+    res = api.post('/api/users', json=req)
     res.status_code = status.HTTP_403_FORBIDDEN
 
 def test_all_omit_req_data(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
-    res = api.post('/api/user', headers={'token': token})
+    res = api.post('/api/users', headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_some_omit_req_data(api: TestClient):
@@ -67,7 +67,7 @@ def test_some_omit_req_data(api: TestClient):
         'name': 'JooHyun',
         'storage_size': 4,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_no_admin(api: TestClient):
@@ -80,7 +80,7 @@ def test_no_admin(api: TestClient):
         'passwd': 'passwd01234',
         'storage_size': 4,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 """
@@ -99,7 +99,7 @@ def test_email_validation(api: TestClient):
         'passwd': 'passwd01234',
         'storage_size': 4,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_name_validation(api: TestClient):
@@ -112,15 +112,15 @@ def test_name_validation(api: TestClient):
         'passwd': 'passwd01234',
         'storage_size': 4,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req['name'] = 'a'* 33
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req['name'] = 'aaa안aaa'
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_passwd_validation(api: TestClient):
@@ -133,11 +133,11 @@ def test_passwd_validation(api: TestClient):
         'passwd': 'p'*7,
         'storage_size': 4,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req['passwd'] = 'p' * 33
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_storage_size_validation(api: TestClient):
@@ -150,7 +150,7 @@ def test_storage_size_validation(api: TestClient):
         'passwd': 'passwd01',
         'storage_size': 0,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_upload_same_data(api: TestClient):
@@ -163,7 +163,7 @@ def test_upload_same_data(api: TestClient):
         'passwd': 'passwd01',
         'storage_size': 5,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     req = {
@@ -172,7 +172,7 @@ def test_upload_same_data(api: TestClient):
         'passwd': 'passwd01',
         'storage_size': 5,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_success(api: TestClient):
@@ -185,7 +185,7 @@ def test_success(api: TestClient):
         'passwd': 'passwd01',
         'storage_size': 5,
     }
-    res = api.post('/api/user', json=req, headers={'token': token})
+    res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_201_CREATED
 
     # 디렉토리 확인

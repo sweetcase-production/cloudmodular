@@ -44,20 +44,20 @@ def api():
     Bootloader.remove_database()
 
 def test_no_token(api: TestClient):
-    res = api.get(f'/api/user/{admin_info["id"]}')
+    res = api.get(f'/api/users/{admin_info["id"]}')
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 def test_uo_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
-    res = api.get(f'/api/user/0', headers={'token': token})
+    res = api.get(f'/api/users/0', headers={'token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_success(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     
-    res = api.get(f'/api/user/{admin_info["id"]}', headers={'token': token})
+    res = api.get(f'/api/users/{admin_info["id"]}', headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
 

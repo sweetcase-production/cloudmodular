@@ -117,7 +117,7 @@ def test_when_file_removed_illeagal_method(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{admin_info["id"]}/{treedir["mydir"]["hi.txt"]["id"]}',
+        f'/api/users/{admin_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
         headers={'token': token},
         params={'method': 'info'},
     )
@@ -142,7 +142,7 @@ def test_when_directory_removed_illeagal_method(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{admin_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{admin_info["id"]}/datas/{treedir["mydir"]["id"]}',
         headers={'token': token},
         params={'method': 'info'}
     )

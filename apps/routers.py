@@ -4,7 +4,7 @@ from apps.storage.views import storage_router
 
 API_ROUTERS = [
     auth_router,
+    storage_router,
     user_search_router,
     user_router,
-    storage_router,
 ]

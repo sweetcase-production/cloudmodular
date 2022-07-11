@@ -61,7 +61,7 @@ def api():
 # TESTING COMMON
 def test_no_token(api: TestClient):
     res = api.post(
-        f'/api/data/{admin_info["id"]}/0',
+        f'/api/users/{admin_info["id"]}/datas/0',
         files=[
             ('files', (f1.name, f1)), 
             ('files', (f2.name, f2))
@@ -73,7 +73,7 @@ def test_client_try_other_storage(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/data/{admin_info["id"]}/0',
+        f'/api/users/{admin_info["id"]}/datas/0',
         json={'dirname': 'mydir'},
         headers={'token': token}
     )
@@ -83,7 +83,7 @@ def test_request_nothing(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -94,7 +94,7 @@ def test_admin_try_to_upload_no_user(api: TestClient):
 
     # File
     res = api.post(
-        f'/api/data/99999999999/0',
+        f'/api/users/99999999999/datas/0',
         headers={'token': token},
         files=[
             ('files', (f1.name, f1)), 
@@ -105,7 +105,7 @@ def test_admin_try_to_upload_no_user(api: TestClient):
 
     # Directory
     res = api.post(
-        f'/api/data/99999999999/0',
+        f'/api/users/99999999999/datas/0',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )
@@ -117,7 +117,7 @@ def test_fileupload_in_no_exists_root(api: TestClient):
     
     # File
     res = api.post(
-        f'/api/data/{client_info["id"]}/999999999999999999',
+        f'/api/users/{client_info["id"]}/datas/999999999999999999',
         headers={'token': token},
         files=[
             ('files', (f1.name, f1)), 
@@ -128,7 +128,7 @@ def test_fileupload_in_no_exists_root(api: TestClient):
 
     # Directory
     res = api.post(
-        f'/api/data/{client_info["id"]}/999999999999999999',
+        f'/api/users/{client_info["id"]}/datas/999999999999999999',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )
@@ -141,70 +141,70 @@ def test_directory_validation(api: TestClient):
 
     # / 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'abce/sbc'}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # \ 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'abce\\sbc'}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # : 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'abce:sbc'}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # * 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'abce*sbc'}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # " 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'abce"sbc'}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # ' 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': "bce'sbc"}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # < 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': "bce<sbc"}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # > 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': "bce>sbc"}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # | 사용 금지
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': "bce|sbc"}
     ).status_code == status.HTTP_400_BAD_REQUEST
 
     # 비어있음
     assert api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': ''}
     ).status_code == status.HTTP_400_BAD_REQUEST
@@ -221,7 +221,7 @@ def test_success_directory(api: TestClient):
 
     # 최상위의 mydir 생성
     res = api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )
@@ -241,7 +241,7 @@ def test_success_directory(api: TestClient):
 
     # subdir 생성
     res = api.post(
-        f'/api/data/{client_info["id"]}/{main_mydir["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{main_mydir["id"]}',
         headers={'token': token},
         json={'dirname': 'subdir'}
     )
@@ -271,7 +271,7 @@ def admin_can_create_to_other_storage(api: TestClient):
     # 같은 이름의 디렉토리라도 다른 위치면 생성이 가능하다
     main_mydir = created_dirs['mydir']
     res = api.post(
-        f'/api/data/{client_info["id"]}/{main_mydir["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{main_mydir["id"]}',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )
@@ -294,7 +294,7 @@ def test_create_same_directory(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     res = api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )
@@ -307,7 +307,7 @@ def test_file_upload(api: TestClient):
 
     # 메인 디렉토리 파일 업로드
     res = api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         files = [
             ('files', (f1.name, f1)), 
@@ -337,7 +337,7 @@ def test_file_upload(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/data/{client_info["id"]}/{created_dirs["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{created_dirs["mydir"]["id"]}',
         headers={'token': token},
         files = [
             ('files', (f1.name, f1)), 
@@ -374,7 +374,7 @@ def test_rewrite_file(api: TestClient):
 
     # 메인 디렉토리 파일 업로드
     res = api.post(
-        f'/api/data/{client_info["id"]}/0',
+        f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
         files = [
             ('files', (f1.name, f1)),

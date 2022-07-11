@@ -1,5 +1,4 @@
 import json
-import traceback
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 import pydantic
@@ -11,7 +10,7 @@ from core.exc import DataAlreadyExists, DataNotFound, UserNotFound
 
 
 storage_router = APIRouter(
-    prefix='/api/data',
+    prefix='/api/users/{user_id}/datas/{data_id}',
     tags=['storage'],
     responses={404: {'error': 'Not Found'}}
 )
@@ -28,7 +27,7 @@ class StorageView:
 
     @staticmethod
     @storage_router.post(
-        path='/{user_id}/{data_id}',
+        path='',
         status_code=status.HTTP_201_CREATED,
         response_model=List[DataInfoRead])
     async def create_data(
@@ -117,7 +116,7 @@ class StorageView:
 
     @staticmethod
     @storage_router.get(
-        path='/{user_id}/{data_id}',
+        path='',
         status_code=status.HTTP_200_OK)
     async def get_data_info(request: Request, user_id: int, data_id: int, method: str):
         
@@ -177,14 +176,14 @@ class StorageView:
 
     @staticmethod
     @storage_router.patch(
-        path='/{user_id}/{data_id}',
+        path='',
         status_code=status.HTTP_200_OK)
     async def update_data_info(request: Request, user_id: int, data_id: int):
         pass
 
     @staticmethod
     @storage_router.delete(
-        path='/{user_id}/{data_id}',
+        path='',
         status_code=status.HTTP_200_OK)
     async def remove_data_info(request: Request, user_id: int, data_id: int):
         pass

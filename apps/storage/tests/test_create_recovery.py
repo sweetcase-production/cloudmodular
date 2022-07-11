@@ -120,7 +120,7 @@ def test_when_file_removed_illeagal_method(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/data/{admin_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{admin_info["id"]}/datas/{treedir["mydir"]["id"]}',
         headers={'token': token},
         files=[('files', (hi.name, hi))]
     )
@@ -143,7 +143,7 @@ def test_when_file_not_removed_data_in_db_removed(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     with open(f'{TEST_EXAMLE_ROOT}/second2.txt', 'rb') as f:
         res = api.post(
-            f'/api/data/{admin_info["id"]}/{treedir["mydir"]["id"]}',
+            f'/api/users/{admin_info["id"]}/datas/{treedir["mydir"]["id"]}',
             headers={'token': token},
             files=[('files', (f.name, f))]
         )
@@ -178,7 +178,7 @@ def test_when_directory_removed_illeagal_method(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/data/{admin_info["id"]}/0',
+        f'/api/users/{admin_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )
@@ -212,7 +212,7 @@ def test_when_directory_not_removed_but_db_removed(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/data/{admin_info["id"]}/0',
+        f'/api/users/{admin_info["id"]}/datas/0',
         headers={'token': token},
         json={'dirname': 'mydir'}
     )

@@ -44,28 +44,28 @@ def api():
     Bootloader.remove_database()
 
 def test_no_token(api: TestClient):
-    res = api.delete(f'/api/user/{admin_info["id"]}')
+    res = api.delete(f'/api/users/{admin_info["id"]}')
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 def test_no_admin(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     
-    res = api.delete(f'/api/user/{admin_info["id"]}', headers={'Token': token})
+    res = api.delete(f'/api/users/{admin_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 def test_user_not_exists(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
-    res = api.delete(f'/api/user/0', headers={'Token': token})
+    res = api.delete(f'/api/users/0', headers={'Token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_success(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
-    res = api.delete(f'/api/user/{client_info["id"]}', headers={'Token': token})
+    res = api.delete(f'/api/users/{client_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_204_NO_CONTENT
 
     # 부검
@@ -78,15 +78,15 @@ def test_success(api: TestClient):
     # 유저 디렉토리는 지워저야 한다
     assert not os.path.isdir(root)
     # DB 상태도 삭제되어야 한다
-    res = api.get(f'/api/user/{client_info["id"]}', headers={'Token': token})
+    res = api.get(f'/api/users/{client_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
     # 삭제 요청 시 404가 떠야 한다.
-    res = api.delete(f'/api/user/{client_info["id"]}', headers={'Token': token})
+    res = api.delete(f'/api/users/{client_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_remove_admin_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
-    res = api.delete(f'/api/user/{admin_info["id"]}', headers={'Token': token})
+    res = api.delete(f'/api/users/{admin_info["id"]}', headers={'Token': token})
     assert res.status_code == status.HTTP_403_FORBIDDEN

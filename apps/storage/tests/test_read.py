@@ -122,13 +122,13 @@ def api():
 
 def test_omit_param_keys(api: TestClient):
     res = api.get(
-        f'/api/data/{client_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
     )
     assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 def test_no_token(api: TestClient):
     res = api.get(
-        f'/api/data/{client_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
         params={'method': 'info'}
     )
     assert res.status_code == status.HTTP_403_FORBIDDEN
@@ -137,7 +137,7 @@ def test_other_access_failed(api: TestClient):
     email, passwd = other_info['email'], other_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{client_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
         headers={'token': token},
         params={'method': 'info'}
     )
@@ -147,7 +147,7 @@ def test_no_exists_data(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{client_info["id"]}/999999999999999999',
+        f'/api/users/{client_info["id"]}/datas/999999999999999999',
         headers={'token': token},
         params={'method': 'info'}
     )
@@ -157,7 +157,7 @@ def test_search_file(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{client_info["id"]}/{treedir["mydir"]["hi.txt"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
         headers={'token': token},
         params={'method': 'info'}
     )
@@ -173,7 +173,7 @@ def test_search_directory(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{client_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
         headers={'token': token},
         params={'method': 'info'}
     )
@@ -189,7 +189,7 @@ def test_admin_can_search_client_repo(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/data/{client_info["id"]}/{treedir["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
         headers={'token': token},
         params={'method': 'info'}
     )

@@ -50,7 +50,7 @@ def api():
     Bootloader.remove_database()
 
 def test_no_token(api: TestClient):
-    res = api.get('/api/user/search')
+    res = api.get('/api/users/search')
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 def test_no_admin(api: TestClient):
@@ -58,7 +58,7 @@ def test_no_admin(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     res = api.get(
-        '/api/user/search',
+        '/api/users/search',
         params={'page_size': 3, 'page': 1}, headers={'Token': token})
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
@@ -66,17 +66,17 @@ def test_without_paging(api: TestClient):
     email, passwd = accounts[0]['email'], accounts[0]['passwd']
     token = AppAuthManager().login(email, passwd)
     
-    res = api.get('/api/user/search', headers={'Token': token})
+    res = api.get('/api/users/search', headers={'Token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     res = api.get(
-        '/api/user/search', 
+        '/api/users/search', 
         params={'page_size': 1}, headers={'Token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     res = api.get(
-        '/api/user/search', 
+        '/api/users/search', 
         params={'page': 1}, headers={'Token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -86,20 +86,20 @@ def test_paging_validation(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     res = api.get(
-        '/api/user/search',
+        '/api/users/search',
         params={'page_size': 0, 'page': 1}, headers={'Token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     # page_size는 21이상 넘기지 못한다.
     res = api.get(
-        '/api/user/search',
+        '/api/users/search',
         params={'page_size': 21, 'page': 1}, headers={'Token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     res = api.get(
-        '/api/user/search',
+        '/api/users/search',
         params={'page_size': 10, 'page': 0}, headers={'Token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -118,13 +118,13 @@ def test_success(api: TestClient):
     
     # 테스트 시작
     res = api.get(
-        '/api/user/search',
+        '/api/users/search',
         params={'page_size': 3, 'page': 1}, headers={'Token': token})
     assert res.status_code == status.HTTP_200_OK
     AssertFunc().assertCountEqual(res.json(), answer[3*0:3*1])
 
     res = api.get(
-        '/api/user/search',
+        '/api/users/search',
         params={'page_size': 3, 'page': 4}, headers={'Token': token})
     assert res.status_code == status.HTTP_200_OK
     AssertFunc().assertCountEqual(res.json(), answer[3*3:3*4])

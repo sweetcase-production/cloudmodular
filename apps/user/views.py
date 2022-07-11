@@ -10,12 +10,12 @@ from core.exc import UserAlreadyExists, UserNotFound
 
 
 user_router = APIRouter(
-    prefix='/api/user',
+    prefix='/api/users',
     tags=['user'],
     responses={404: {'error': 'Not Found'}}
 )
 user_search_router = APIRouter(
-    prefix='/api/user/search',
+    prefix='/api/users/search',
     tags=['user', 'search'],
     responses={404: {'error': 'Not Found'}}
 )
