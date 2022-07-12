@@ -1,8 +1,12 @@
-from typing import Any, Dict, List, Optional
+import shutil
+from typing import Any, Dict, List, Optional, Union
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import and_
 import os
+import zipfile
+import random
+import datetime
 
 from apps.storage.models import DataInfo
 from apps.storage.schemas import DataInfoCreate, DataInfoUpdate
@@ -93,7 +97,7 @@ class DataFileCRUDManager(CRUDManager):
                 # 파일 생성
                 # 기존에 존재하는 파일은 덮어쓴다.
                 DataStorageQuery().create(root=file_root, is_dir=False, file=file)
-            except Exception as e:
+            except Exception:
                 # 실패 시 저장했던 DB 데이터를 삭제한다
                 DataDBQuery().destroy(data_info.id)
                 continue
@@ -102,9 +106,9 @@ class DataFileCRUDManager(CRUDManager):
                 res.append(data_info)
         return res
 
-    def read(self, user_id: int, raw_root: str):
+    def read(self, raw_root: str) -> str:
         # 다운로드 할 때만 사용
-        raise NotImplementedError()
+        return raw_root
 
     def update(self, user_id: int, data_id: int, new_name: str):
         # User 확인
@@ -144,8 +148,6 @@ class DataFileCRUDManager(CRUDManager):
             raise e
         return res
 
-
-    
     def destroy(self, user_id: int, data_id: int):
         root, name = DataDBQuery().destroy(data_id)
         raw_root = \
@@ -291,10 +293,13 @@ class DataDirectoryCRUDManager(CRUDManager):
             raise e
         return res
 
-    
-    def read(self, user_id: int, raw_root: str):
+    def read(self, raw_root: str) -> str:
         # 다운로드 할 때만 사용
-        raise NotImplementedError()
+
+        # Zip File 생성
+        tmp_name = f'download-{datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")}'
+        tmp_zip = shutil.make_archive(tmp_name, 'zip', raw_root)
+        return tmp_zip
     
     def destroy(self, user_id: int, data_id: int):
         root, name = DataDBQuery().destroy(data_id)
@@ -303,6 +308,7 @@ class DataDirectoryCRUDManager(CRUDManager):
         DataStorageQuery().destroy(root=raw_root)
 
     def search(self, *args, **kwargs):
+
         raise NotImplementedError()
 
 
@@ -352,7 +358,12 @@ class DataManager(FrontendManager):
                 dirname=req_dirname
             )]
 
-    def read(self, token: str, user_id: int, data_id: int, mode: str = 'info') -> Dict[str, Any]:
+    def read(
+        self, token: str, 
+        user_id: int, 
+        data_id: int, 
+        mode: str = 'info'
+    ) -> Dict[str, Any]:
         
         try:
             # 토큰 정보 추출
@@ -414,14 +425,13 @@ class DataManager(FrontendManager):
         }
 
         if mode == 'download':
-            # TODO 추가 구현 필요
+            # 다운로드 모드
+            # 다운로드 대상의 파일 주소만 리턴
             if not data_info.is_dir:
-                res['file'] = FileResponse(raw_root)
+                res['file'] = DataFileCRUDManager().read(raw_root)
             else:
-                # TODO 디렉토리일 경우, 추가 tmp파일
-                pass
-        else:
-            return res
+                res['file'] = DataDirectoryCRUDManager().read(raw_root)
+        return res
     
     def update(
         self, token: str, user_id: int, data_id: int, new_name: str

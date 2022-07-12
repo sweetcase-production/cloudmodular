@@ -1,13 +1,13 @@
 import json
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, UploadFile, status
 import pydantic
-from apps.storage.models import DataInfo
-from apps.storage.schemas import DataInfoRead
+from fastapi.responses import FileResponse
 
+from apps.storage.schemas import DataInfoRead
 from apps.storage.utils.managers import DataManager
 from core.exc import DataAlreadyExists, DataNotFound, UserNotFound
-
+from core.background_tasks import background_remove_file
 
 storage_router = APIRouter(
     prefix='/api/users/{user_id}/datas/{data_id}',
@@ -118,7 +118,13 @@ class StorageView:
     @storage_router.get(
         path='',
         status_code=status.HTTP_200_OK)
-    async def get_data_info(request: Request, user_id: int, data_id: int, method: str):
+    async def get_data_info(
+        request: Request, 
+        user_id: int, 
+        data_id: int, 
+        method: str,
+        background_tasks: BackgroundTasks,
+    ):
 
         if method not in ('info', 'download'):
             # 잘못된 method값
@@ -140,7 +146,7 @@ class StorageView:
 
         try:
             # 정보 검색
-            data = DataManager().read(token, user_id, data_id)
+            data = DataManager().read(token, user_id, data_id, method)
         except PermissionError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -165,6 +171,10 @@ class StorageView:
         if method == 'info':
             return data['info']
         else:
+            # 파일 다운로드
+            download_root = data['file']
+            data['file'] = FileResponse(download_root)
+            background_tasks.add_task(background_remove_file, download_root)
             return data['file']
 
     @staticmethod

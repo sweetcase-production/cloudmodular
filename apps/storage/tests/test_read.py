@@ -200,3 +200,26 @@ def test_admin_can_search_client_repo(api: TestClient):
         'name': 'mydir',
         'size': 3,
     }
+
+def test_download_file(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
+        headers={'token': token},
+        params={'method': 'download'}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers.get('content-type') == 'text/plain; charset=utf-8'
+
+def test_download_directory(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
+        headers={'token': token},
+        params={'method': 'download'}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers.get('content-type') == 'application/zip'
