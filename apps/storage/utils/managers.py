@@ -5,7 +5,7 @@ from sqlalchemy import and_
 import os
 
 from apps.storage.models import DataInfo
-from apps.storage.schemas import DataInfoCreate
+from apps.storage.schemas import DataInfoCreate, DataInfoUpdate
 from apps.storage.utils.queries.data_db_query import DataDBQuery
 from apps.storage.utils.queries.data_storage_query import DataStorageQuery
 from apps.user.models import User
@@ -106,8 +106,45 @@ class DataFileCRUDManager(CRUDManager):
         # 다운로드 할 때만 사용
         raise NotImplementedError()
 
-    def update(self, *args, **kwargs):
-        raise NotImplementedError()
+    def update(self, user_id: int, data_id: int, new_name: str):
+        # User 확인
+        user: User = UserDBQuery().read(user_id=user_id)
+        if not user:
+            raise UserNotFound()
+        # DataInfo 확인
+        data: DataInfo = \
+            DataDBQuery().read(user_id=user_id, data_id=data_id)
+        if not data:
+            raise DataNotFound()
+        # Validate 측정
+        DataInfoUpdate(name=new_name, root=data.root, user_id=user_id)
+
+        raw_root = f'{SERVER["storage"]}/storage/{user_id}/root{data.root}{data.name}'
+        try:
+            # 디렉토리 수정
+            new_root = DataStorageQuery().update(raw_root, new_name)
+        except Exception:
+            """
+            같은 이름의 파일 및 디렉토리가 있는 경우 발생
+            업데이트 불가능
+            """
+            raise DataAlreadyExists()
+        
+        if not new_root:
+            # raw_root가 스토리지에 존재하지 않음
+            # DB상에서 삭제
+            DataDBQuery().destroy(data_id)
+            raise DataNotFound()
+        
+        try:
+            # DB 데이터 수정
+            res = DataDBQuery().update(data_info=data, new_name=new_name, user_id=user_id)
+        except Exception as e:
+            # DB 데이터 수정에 에러 발생
+            raise e
+        return res
+
+
     
     def destroy(self, *args, **kwargs):
         raise NotImplementedError()
@@ -184,7 +221,7 @@ class DataDirectoryCRUDManager(CRUDManager):
             finally:
                 session.close()
             # Storage 삭제
-            DataStorageQuery().destroy(root=root, is_dir=True)
+            DataStorageQuery().destroy(root)
 
             # 다시 생성
             create_format: DataInfoCreate = DataInfoCreate(
@@ -212,8 +249,44 @@ class DataDirectoryCRUDManager(CRUDManager):
             return db_record
         
 
-    def update(self, *args, **kwargs):
-        raise NotImplementedError()
+    def update(self, user_id: int, data_id: int, new_name: str):
+        # User 확인
+        user: User = UserDBQuery().read(user_id=user_id)
+        if not user:
+            raise UserNotFound()
+        # DataInfo 확인
+        data: DataInfo = \
+            DataDBQuery().read(user_id=user_id, data_id=data_id)
+        if not data:
+            raise DataNotFound()
+        # Validate 측정
+        DataInfoUpdate(name=new_name, root=data.root, user_id=user_id)
+
+        raw_root = f'{SERVER["storage"]}/storage/{user_id}/root{data.root}{data.name}'
+        try:
+            # 디렉토리 수정
+            new_root = DataStorageQuery().update(raw_root, new_name)
+        except Exception:
+            """
+            같은 이름의 파일 및 디렉토리가 있는 경우 발생
+            업데이트 불가능
+            """
+            raise DataAlreadyExists()
+        
+        if not new_root:
+            # raw_root가 스토리지에 존재하지 않음
+            # DB상에서 삭제
+            DataDBQuery().destroy(data_id)
+            raise DataNotFound()
+        
+        try:
+            # DB 데이터 수정
+            res = DataDBQuery().update(data_info=data, new_name=new_name, user_id=user_id)
+        except Exception as e:
+            # DB 데이터 수정에 에러 발생
+            raise e
+        return res
+
     
     def read(self, user_id: int, raw_root: str):
         # 다운로드 할 때만 사용
@@ -342,4 +415,54 @@ class DataManager(FrontendManager):
                 pass
         else:
             return res
-            
+    
+    def update(
+        self, token: str, user_id: int, data_id: int, new_name: str
+    ) -> Dict[str, Any]:
+        try:
+            # 토큰 정보 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+
+        # email에 대한 요청 사용자 구하기
+        operator: Optional[User] = \
+            UserDBQuery().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+
+        # Admin이거나 client and 자기 자신이어야 한다
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | 
+                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, user_id))
+            )
+        ):
+            raise PermissionError()
+        
+        try:
+            # 데이터 검색
+            target: Optional[DataInfo] = \
+                DataDBQuery().read(user_id=user_id, data_id=data_id)
+            if not target:
+                # 데이터 없음
+                raise DataNotFound()
+            if target.is_dir:
+                # 디렉토리
+                res = DataDirectoryCRUDManager() \
+                    .update(user_id, data_id, new_name)
+            else:
+                # 파일
+                res = DataFileCRUDManager() \
+                    .update(user_id, data_id, new_name)
+        except Exception as e:
+            raise e
+        else:
+            return {
+                'data_id': res.id,
+                'root': res.root,
+                'name': res.name,
+                'is_dir': res.is_dir,
+            }

@@ -7,7 +7,8 @@ from architecture.query.crud import (
     QueryCRUD, 
     QueryCreator, 
     QueryDestroyer,
-    QueryReader
+    QueryReader,
+    QueryUpdator
 )
 
 
@@ -73,15 +74,25 @@ class DataStorageQueryReader(QueryReader):
                 }
 
 class DataStorageQueryDestroyer(QueryDestroyer):
-    def __call__(self, root: str, is_dir: bool):
-        if is_dir:
-            if os.path.isdir(root):
-                shutil.rmtree(root)
+    def __call__(self, root: str):
+        if os.path.isfile(root):
+            os.remove(root)
+        elif os.path.isdir(root):
+            shutil.rmtree(root)
+
+class DataStorageQueryUpdator(QueryUpdator):
+    def __call__(self, root: str, new_name: str) -> Optional[str]:
+        if (os.path.isfile(root) or os.path.isdir(root)):
+            root_list = root.split('/')
+            root_list[-1] = new_name
+            new_root = '/'.join(root_list)
+            os.rename(root, new_root)   # 같은 이름이 존재할 경우 에러 발생
+            return new_root
         else:
-            if os.path.isfile(root):
-                os.remove(root)
+            return None
 
 class DataStorageQuery(QueryCRUD):
     creator = DataStorageQueryCreator
     destroyer = DataStorageQueryDestroyer
     reader =  DataStorageQueryReader
+    updator = DataStorageQueryUpdator

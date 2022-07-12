@@ -119,13 +119,6 @@ class StorageView:
         path='',
         status_code=status.HTTP_200_OK)
     async def get_data_info(request: Request, user_id: int, data_id: int, method: str):
-        
-        res = {
-            'root': None,
-            'is_dir': None,
-            'name': None,
-            'size': None,
-        }
 
         if method not in ('info', 'download'):
             # 잘못된 method값
@@ -179,7 +172,61 @@ class StorageView:
         path='',
         status_code=status.HTTP_200_OK)
     async def update_data_info(request: Request, user_id: int, data_id: int):
-        pass
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            # json 데이터 가져오기
+            req = await request.json()
+            new_name = req['name']
+        except (RuntimeError, KeyError, json.decoder.JSONDecodeError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='요청값이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            # 데이터 업데이트
+            res = DataManager().update(token, user_id, data_id, new_name)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='접근 권한이 없습니다.')
+        except pydantic.ValidationError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e))
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='해당 사용자를 찾을 수 없습니다.')
+        except DataNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='수정하고자 하는 데이터를 찾을 수 없습니다.')
+        except DataAlreadyExists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='해당 데이터가 이미 존재합니다.')
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            return res
+        
 
     @staticmethod
     @storage_router.delete(
