@@ -146,8 +146,12 @@ class DataFileCRUDManager(CRUDManager):
 
 
     
-    def destroy(self, *args, **kwargs):
-        raise NotImplementedError()
+    def destroy(self, user_id: int, data_id: int):
+        root, name = DataDBQuery().destroy(data_id)
+        raw_root = \
+            f'{SERVER["storage"]}/storage/{user_id}/root{root}{name}'
+        DataStorageQuery().destroy(root=raw_root)
+        
 
     def search(self, *args, **kwargs):
         raise NotImplementedError()
@@ -292,8 +296,11 @@ class DataDirectoryCRUDManager(CRUDManager):
         # 다운로드 할 때만 사용
         raise NotImplementedError()
     
-    def destroy(self, *args, **kwargs):
-        raise NotImplementedError()
+    def destroy(self, user_id: int, data_id: int):
+        root, name = DataDBQuery().destroy(data_id)
+        raw_root = \
+            f'{SERVER["storage"]}/storage/{user_id}/root{root}{name}'
+        DataStorageQuery().destroy(root=raw_root)
 
     def search(self, *args, **kwargs):
         raise NotImplementedError()
@@ -466,3 +473,41 @@ class DataManager(FrontendManager):
                 'name': res.name,
                 'is_dir': res.is_dir,
             }
+
+    def destroy(self, token: str, user_id: int, data_id: int):
+
+        try:
+            # 토큰 정보 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+
+        # email에 대한 요청 사용자 구하기
+        operator: Optional[User] = \
+            UserDBQuery().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+
+        # Admin이거나 client and 자기 자신이어야 한다
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | 
+                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, user_id))
+            )
+        ):
+            raise PermissionError()
+
+        try:
+            # 검색
+            target: Optional[DataInfo] = \
+                DataDBQuery().read(user_id=user_id, data_id=data_id)
+            if not target:
+                raise DataNotFound()
+            elif target.is_dir:
+                DataDirectoryCRUDManager().destroy(user_id, data_id)
+            else:
+                DataFileCRUDManager().destroy(user_id, data_id)
+        except Exception as e:
+            raise e

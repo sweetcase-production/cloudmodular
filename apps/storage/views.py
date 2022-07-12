@@ -231,6 +231,35 @@ class StorageView:
     @staticmethod
     @storage_router.delete(
         path='',
-        status_code=status.HTTP_200_OK)
+        status_code=status.HTTP_204_NO_CONTENT)
     async def remove_data_info(request: Request, user_id: int, data_id: int):
-        pass
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            DataManager().destroy(token, user_id, data_id)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='접근 권한이 없습니다.')
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='해당 사용자를 찾을 수 없습니다.')
+        except DataNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='수정하고자 하는 데이터를 찾을 수 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')

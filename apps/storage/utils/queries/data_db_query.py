@@ -53,6 +53,7 @@ class DataDBQueryDestroyer(QueryDestroyer):
         q = session.query(DataInfo)
         
         data: DataInfo = q.filter(DataInfo.id == data_id).scalar()
+        root, name = data.root, data.name
         try:
             if not data.is_dir:
                 # 파일
@@ -69,7 +70,7 @@ class DataDBQueryDestroyer(QueryDestroyer):
             session.rollback()
             raise e
         else:
-            return data
+            return root, name
         finally:
             session.close()
 
