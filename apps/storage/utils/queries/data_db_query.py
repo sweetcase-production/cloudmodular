@@ -141,18 +141,14 @@ class DataDBQueryUpdator(QueryUpdator):
             data_info.name = new_name
             if data_info.is_dir:
                 # 디렉토리인 경우 하위 디렉토리의 루트 수정
-                """
-                TODO 리펙토링 진행 시 어차피 DB 테이블 재설계할거라
-                동작되는 정도만
-                """
                 dst_root = data_info.root + prev_name + '/'
                 src_root = data_info.root + new_name + '/'
                 targets = q.filter(and_(
                     DataInfo.user_id == user_id,
                     DataInfo.root.startswith(dst_root),
-                )).all()
-                for target in targets:
-                    target.root = target.root.replace(dst_root, src_root)
+                )).update({
+                    DataInfo.root: func.replace(DataInfo.root, dst_root, src_root)
+                }, synchronize_session=False)
             session.commit()
             session.refresh(data_info)
         except Exception as e:
