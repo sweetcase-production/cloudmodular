@@ -20,7 +20,10 @@ from core.exc import (
     DataNotFound,
     UserNotFound
 )
-from core.token_generators import LoginTokenGenerator
+from core.token_generators import (
+    LoginTokenGenerator,
+    decode_token,
+)
 from core.permissions import (
     PermissionAdminChecker as AdminOnly,
     PermissionIssueLoginChecker as LoginedOnly,
@@ -39,8 +42,13 @@ class DataFileCRUDManager(CRUDManager):
     ) -> List[DataInfo]:
         """
         파일 생성
-        
         동일한 이름의 파일이 존재하는 경우, 덮어쓴다.
+
+        :param root_id: 파일이 올라갈 디렉토리 아이디
+        :param user_id: 사용자 아이디
+        :param files: 올라갈 파일 데이터들
+
+        :return: 생성된 데이터 리스트
         """
         res: List[DataInfo] = []
 
@@ -59,28 +67,31 @@ class DataFileCRUDManager(CRUDManager):
             )
             if not directory_info:
                 raise DataNotFound()
+            # 상위 디렉토리 절대경로 생성
             dir_root = f'{directory_info.root}{directory_info.name}/'
         
         # File 돌면서 차례대로 생성 및 덮어쓰기
         for file in files:
             filename = file.filename.split('/')[-1]
-            # native file_root 생성
+            # 파일 절대 경로 생성
             file_root = \
                 f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{filename}'
-
             """
             같은 이름, 같은 루트, 같은 이용자의 파일관련 데이터가 있는 지
             확인하기.
             존재하는 경우는, 해당 파일이 부적절한 방법으로 지워진 경우이다.
             이때 DB 데이터를 삭제해서 에러호출을 하는 것이 아닌
             그냥 파일을 새로 만든다.
+
+            단 같은 이름의 파일이 아닌 디렉토리인 경우, 이부분을 패스한다.
             """
             data_info: DataInfo = DataDBQuery().read(
-                user_id=user_id, full_root=(dir_root, filename),
-                is_dir=False
+                user_id=user_id, 
+                full_root=(dir_root, filename),
             )
             if not data_info:
                 # 없으면 새로 생성
+                # 여기서 name이 잘못되면 ValidationError발생
                 create_format: DataInfoCreate = DataInfoCreate(
                     name=filename,
                     user_id=user_id,
@@ -88,10 +99,15 @@ class DataFileCRUDManager(CRUDManager):
                     is_dir=False
                 )
                 try:
+                    # DB 등록
                     data_info: DataInfo = DataDBQuery().create(create_format)
                 except Exception:
                     # 에러발생시 Pass
-                    # TODO 추후에 에러 상태를 출력 또는 저장하는 기능을 추가해야 한다.
+                    continue
+            else:
+                if data_info.is_dir:
+                    # 디렉토리가 등장하는 경우
+                    # 생성하지 않고 무시
                     continue
             try:
                 # 파일 생성
@@ -115,17 +131,19 @@ class DataFileCRUDManager(CRUDManager):
         user: User = UserDBQuery().read(user_id=user_id)
         if not user:
             raise UserNotFound()
-        # DataInfo 확인
+        # 수정 대상 DataInfo 확인
         data: DataInfo = \
-            DataDBQuery().read(user_id=user_id, data_id=data_id)
+            DataDBQuery().read(user_id=user_id, data_id=data_id, is_dir=False)
         if not data:
             raise DataNotFound()
         # Validate 측정
         DataInfoUpdate(name=new_name, root=data.root, user_id=user_id)
 
-        raw_root = f'{SERVER["storage"]}/storage/{user_id}/root{data.root}{data.name}'
+        prev_name = data.name
+        directory_root = f'{SERVER["storage"]}/storage/{user_id}/root{data.root}'
+        raw_root = f'{directory_root}{prev_name}'
         try:
-            # 디렉토리 수정
+            # 파일 수정
             new_root = DataStorageQuery().update(raw_root, new_name)
         except Exception:
             """
@@ -142,9 +160,14 @@ class DataFileCRUDManager(CRUDManager):
         
         try:
             # DB 데이터 수정
-            res = DataDBQuery().update(data_info=data, new_name=new_name, user_id=user_id)
+            res = DataDBQuery().update(
+                data_info=data, 
+                new_name=new_name, user_id=user_id
+            )
         except Exception as e:
             # DB 데이터 수정에 에러 발생
+            # Storage rollback
+            DataStorageQuery().update(f'{directory_root}{new_name}', data.name)
             raise e
         return res
 
@@ -189,8 +212,7 @@ class DataDirectoryCRUDManager(CRUDManager):
 
         # Storage에 데이터가 있는 지 확인
         root = f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{dirname}'
-        storage_record = DataStorageQuery().read(
-            root=root, is_dir=True)
+        storage_record = DataStorageQuery().read(root=root, is_dir=True)
 
         if db_record and storage_record:
             # 생성하고자 하는 디렉토리가 이미 존재하는 경우
@@ -199,7 +221,6 @@ class DataDirectoryCRUDManager(CRUDManager):
             # DB에만 있고 Storage에는 없음
             # 해당 디렉토리의 하위의 모든 DB 삭제
             DataDBQuery().destroy(db_record.id)
-
             try:
                 # Storage만 생성
                 DataStorageQuery().create(root=root, is_dir=True)
@@ -212,7 +233,7 @@ class DataDirectoryCRUDManager(CRUDManager):
             # Storage에만 있고 DB에는 없음
             # 해당 디렉토리의 하위 DB데이터 전부 다 삭제
             # 해당 디렉토리의 하위 파일 및 디렉토리 전부 다 삭제
-            # TODO 하위 데이터까지 복구하는 프로세스를 목적으로 구현 필요
+            # 이 경우는 거의 없다고 가정
             session = DatabaseGenerator.get_session()
             query = session.query(DataInfo)
             try:
@@ -250,6 +271,7 @@ class DataDirectoryCRUDManager(CRUDManager):
             try:
                 DataStorageQuery().create(root=root, is_dir=True)
             except Exception as e:
+                # 롤백
                 DataDBQuery().destroy(db_record.id)
                 raise e
             return db_record
@@ -268,7 +290,9 @@ class DataDirectoryCRUDManager(CRUDManager):
         # Validate 측정
         DataInfoUpdate(name=new_name, root=data.root, user_id=user_id)
 
-        raw_root = f'{SERVER["storage"]}/storage/{user_id}/root{data.root}{data.name}'
+        prev_name = data.name
+        directory_root = f'{SERVER["storage"]}/storage/{user_id}/root{data.root}'
+        raw_root = f'{directory_root}{prev_name}'
         try:
             # 디렉토리 수정
             new_root = DataStorageQuery().update(raw_root, new_name)
@@ -287,9 +311,13 @@ class DataDirectoryCRUDManager(CRUDManager):
         
         try:
             # DB 데이터 수정
-            res = DataDBQuery().update(data_info=data, new_name=new_name, user_id=user_id)
+            res = DataDBQuery().update(
+                data_info=data, new_name=new_name, user_id=user_id
+            )
         except Exception as e:
             # DB 데이터 수정에 에러 발생
+            # Storage 원상태 복구
+            DataStorageQuery().update(f'{directory_root}{new_name}', prev_name)
             raise e
         return res
 
@@ -322,14 +350,18 @@ class DataManager(FrontendManager):
         request_files: Optional[List[UploadFile]] = None,
         req_dirname: Optional[str] = None
     ) -> List[DataInfo]:
-        
-        try:
-            # 토큰 정보 추출
-            decoded_token = LoginTokenGenerator().decode(token)
-            op_email = decoded_token['email']
-            issue = decoded_token['iss']
-        except Exception:
-            raise PermissionError()
+        """
+        파일/디렉토리 생성
+
+        :param token: 인증용 토큰
+        :param user_id: 사용자 아이디
+        :param data_id: 데이터가 올라갈 상위 디렉토리 아이디
+        :param request_files: 요청된 파일들
+        :param req_dirname: 새로 생성할 디렉토리 이름
+
+        :return: 새로 생성된 데이터의 리스트를 반환
+        """
+        op_email, issue = decode_token(token, LoginTokenGenerator)
         operator: User = UserDBQuery().read(user_email=op_email)
         # 해덩 User가 없으면 Permission Failed
         if not operator:
@@ -365,13 +397,7 @@ class DataManager(FrontendManager):
         mode: str = 'info'
     ) -> Dict[str, Any]:
         
-        try:
-            # 토큰 정보 추출
-            decoded_token = LoginTokenGenerator().decode(token)
-            op_email = decoded_token['email']
-            issue = decoded_token['iss']
-        except Exception:
-            raise PermissionError()
+        op_email, issue = decode_token(token, LoginTokenGenerator)
         operator: User = UserDBQuery().read(user_email=op_email)
         # 해당 User 없으면 PermissionError
         if not operator:
@@ -436,17 +462,10 @@ class DataManager(FrontendManager):
     def update(
         self, token: str, user_id: int, data_id: int, new_name: str
     ) -> Dict[str, Any]:
-        try:
-            # 토큰 정보 추출
-            decoded_token = LoginTokenGenerator().decode(token)
-            op_email = decoded_token['email']
-            issue = decoded_token['iss']
-        except Exception:
-            raise PermissionError()
-
+        
         # email에 대한 요청 사용자 구하기
-        operator: Optional[User] = \
-            UserDBQuery().read(user_email=op_email)
+        op_email, issue = decode_token(token, LoginTokenGenerator)
+        operator: Optional[User] = UserDBQuery().read(user_email=op_email)
         if not operator:
             raise PermissionError()
 
@@ -486,15 +505,8 @@ class DataManager(FrontendManager):
 
     def destroy(self, token: str, user_id: int, data_id: int):
 
-        try:
-            # 토큰 정보 추출
-            decoded_token = LoginTokenGenerator().decode(token)
-            op_email = decoded_token['email']
-            issue = decoded_token['iss']
-        except Exception:
-            raise PermissionError()
-
         # email에 대한 요청 사용자 구하기
+        op_email, issue = decode_token(token, LoginTokenGenerator)
         operator: Optional[User] = \
             UserDBQuery().read(user_email=op_email)
         if not operator:

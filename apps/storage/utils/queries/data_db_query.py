@@ -81,6 +81,10 @@ class DataDBQueryReader(QueryReader):
         data_id: Optional[int] = None,
         full_root: Optional[Sequence[str]] = None
     ) -> DataInfo:
+        """
+        is_dir이 설정된 경우 is_dir에 따른 데이터 검색
+        None이면 is_dir 여부 관계없이 검색
+        """
         session = DatabaseGenerator.get_session()
         q = session.query(DataInfo)
 
@@ -92,6 +96,7 @@ class DataDBQueryReader(QueryReader):
                     DataInfo.id == data_id,
                 )).scalar()
             elif full_root:
+                # search by full_root
                 data: DataInfo = q.filter(and_(
                     DataInfo.user_id == user_id,
                     DataInfo.root == full_root[0],
@@ -102,6 +107,10 @@ class DataDBQueryReader(QueryReader):
             raise e
         else:
             if is_dir:
+                """
+                is_dir이 설정된 경우
+                is_dir까지 체크한다.
+                """
                 if data and data.is_dir != is_dir:
                     return None
             return data

@@ -36,6 +36,12 @@ class StorageView:
         data_id: int, 
         files: Optional[List[UploadFile]] = None,
     ):
+        """
+        파일/디렉토리 생성 API
+        
+        :params files(form): 업로드할 파일 리스트, 없을 경우 디렉토리 생성으로 간주한다.
+        :params dirname(json): 생성할 디렉토리의 이름.
+        """
         try:
             # 토큰 가져오기
             token = request.headers['token']
@@ -54,16 +60,17 @@ class StorageView:
                 # 요청된 디렉토리 이름 추출하기
                 _req = await request.json()
             except RuntimeError:
-                # 없는 경우
+                # json데이터가 없는경우, 파일 요청으로 간주
                 pass
             except Exception as e:
                 # 알 수 없는 에러
                 raise e
-            else:    
+            else:
                 if _req and 'dirname' in _req:
+                    # 새 디랙토리의 이름을 받음
                     dirname = _req['dirname']
         except json.decoder.JSONDecodeError:
-            # 없는경우 그냥 패스한다.
+            # 없는경우 그냥 패스한다. -> 파일 생성으로 간주
             pass
         except Exception as e:
             raise HTTPException(

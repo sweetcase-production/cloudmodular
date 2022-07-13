@@ -16,6 +16,8 @@ client_info = None
 f1, f2 = None, None
 created_dirs = dict()
 
+f1_id = None
+
 TEST_EXAMLE_ROOT = 'apps/storage/tests/example'
 
 @pytest.fixture(scope='module')
@@ -302,6 +304,7 @@ def test_create_same_directory(api: TestClient):
 
 # TESTING FILE
 def test_file_upload(api: TestClient):
+    global f1_id
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
@@ -367,6 +370,8 @@ def test_file_upload(api: TestClient):
     assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt')
     assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi2.txt')
 
+    f1_id = output[0]['id']
+
 def test_rewrite_file(api: TestClient):
     # 같은 이릉의 파일 업로드일 경우, 덮어쓰기 가능
     email, passwd = client_info['email'], client_info['passwd']
@@ -384,3 +389,17 @@ def test_rewrite_file(api: TestClient):
 
     # 파일 존재 확인
     assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt')
+
+def test_try_create_on_file(api: TestClient):
+    # 파일위에 파일/디렉토리를 생성하는 것은 불가능
+    # 디렉토리를 못찾은 걸로 간주
+
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/{f1_id}',
+        headers={'token': token},
+        files = [('files', (f1.name, f1))]
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND

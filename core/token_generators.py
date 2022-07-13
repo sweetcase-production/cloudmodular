@@ -1,3 +1,5 @@
+from typing import Type
+
 from architecture.query.auth import AuthTokenGenerator
 from core.jwt_controls import AppTokenBuilder
 
@@ -19,3 +21,14 @@ class FirstSettingTokenGenerator(AuthTokenGenerator):
     issue_key = 'iss'
     issue_name = 'first-setting'
     token_length = 10
+
+def decode_token(
+    token: str, gen_type: Type[AuthTokenGenerator]
+) -> (str, str):
+    try:
+        decoded_token = gen_type().decode(token)
+        op_email = decoded_token['email']
+        issue = decoded_token['iss']
+    except Exception:
+        raise PermissionError()
+    return op_email, issue
