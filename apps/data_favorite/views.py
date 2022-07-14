@@ -1,8 +1,7 @@
-import json
 from fastapi import APIRouter, HTTPException, Request, status
 
 from apps.data_favorite.utils.managers import DataFavoriteManager
-from core.exc import DataFavoriteNotSelected, DataIsAlreadyFavorited, DataNotFound
+from core.exc import DataFavoriteNotSelected, DataIsAlreadyFavorited, DataNotFound, IsNotDirectory
 
 
 data_favorite_router = APIRouter(
@@ -25,8 +24,6 @@ class DataFavoriteView:
     async def set_favorite(request: Request, user_id: int, data_id: int):
         """
         즐겨찾기 설정
-        post form(json)
-        { "data_id": int }
         """
         try:
             # 토큰 가져오기
@@ -64,8 +61,39 @@ class DataFavoriteView:
     @data_favorite_router.get(
         path='',
         status_code=status.HTTP_200_OK)
-    async def get_favorite(request: Request, user_id: int):
-        pass
+    async def get_favorite(request: Request, user_id: int, data_id: int):
+        
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            # 즐겨찾기 추가
+            return DataFavoriteManager().get_favorite_list(token, user_id, data_id)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='권한이 없습니다.')
+        except DataNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='디렉토리가 없습니다.')
+        except IsNotDirectory:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='디렉토가 아닙니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
 
     @staticmethod
     @data_favorite_router.delete(

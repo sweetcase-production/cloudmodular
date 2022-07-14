@@ -1,8 +1,9 @@
-from typing import Optional
-from apps.data_favorite.utils.query.data_favorite_query import DataFavoriteQuery
+from typing import List, Optional
 
 from apps.user.models import User
 from apps.user.utils.queries.user_db_query import UserDBQuery
+from apps.data_favorite.utils.query.data_favorite_query import DataFavoriteQuery
+from apps.storage.models import DataInfo
 from architecture.manager.base_manager import FrontendManager
 from core.exc import DataFavoriteNotSelected, DataIsAlreadyFavorited
 from core.token_generators import (
@@ -60,8 +61,29 @@ class DataFavoriteManager(FrontendManager):
     def get_favorite_list(
         self, token: str, user_id: int, data_id: int
     ):
-        pass
+        # 요청 사용자 구하기
+        op_email, issue = decode_token(token, LoginTokenGenerator)
+        operator: Optional[User] = UserDBQuery().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
 
+        # Admin이거나 client and 자기 자신이어야 한다
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | 
+                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, user_id))
+            )
+        ):
+            raise PermissionError()
+        favorites: List[DataInfo] = \
+            DataFavoriteQuery().search(user_id, data_id)
+        result = []
+        
+        for favorite in favorites:
+            result.append({'data_id': favorite.id})
+
+        return result
+        
     def unset_favorite(
         self, token: str, user_id: int, data_id: int
     ):

@@ -14,6 +14,14 @@ class DataAlreadyExists(Exception):
     def __init__(self):
         super().__init__("Data Already Exists")
 
+class IsNotFile(Exception):
+    def __init__(self):
+        super().__init__("Is not file")
+
+class IsNotDirectory(Exception):
+    def __init__(self):
+        super().__init__("Is not directory")
+
 class DataNotFound(Exception):
     def __init__(self):
         super().__init__("Data Not Found")
