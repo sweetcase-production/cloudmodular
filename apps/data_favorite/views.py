@@ -12,9 +12,9 @@ data_favorite_router = APIRouter(
 
 class DataFavoriteView:
     """
-    (POST)      /api/users/{user_id}/datas/{data_id}/favorites                  즐겨찾기 추가
-    (GET)       /api/users/{user_id}/datas/{data_id}/favorites?data_id=<int>    data_id상의 즐겨찾기된 데이터 갖고오기
-    (DELETE)    /api/users/{user_id}/datas/{data_id}/favorites                  즐겨찾기 해제
+    (POST)      /api/users/{user_id}/datas/{data_id}/favorites  즐겨찾기 추가
+    (GET)       /api/users/{user_id}/datas/{data_id}/favorites  data_id상의 즐겨찾기된 데이터 갖고오기
+    (DELETE)    /api/users/{user_id}/datas/{data_id}/favorites  즐겨찾기 해제
     """
     
     @staticmethod
