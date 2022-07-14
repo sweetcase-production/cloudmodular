@@ -19,6 +19,7 @@ class DataInfo(Base):
     name = Column(String(255), nullable=False)
     is_dir = Column(Boolean, nullable=False)
     created = Column(DateTime(timezone=True), server_default=func.now())
+    is_favorite = Column(Boolean, nullable=True, default=False)
     user_id = Column(
         Integer,
         ForeignKey('user.id'),

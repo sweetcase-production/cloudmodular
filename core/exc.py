@@ -17,3 +17,11 @@ class DataAlreadyExists(Exception):
 class DataNotFound(Exception):
     def __init__(self):
         super().__init__("Data Not Found")
+
+class DataFavoriteNotSelected(Exception):
+    def __init__(self):
+        super().__init__("This data is not selected by favorite")
+
+class DataIsAlreadyFavorited(Exception):
+    def __init__(self):
+        super().__init__("This data is already selected by favorite")
