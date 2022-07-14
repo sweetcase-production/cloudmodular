@@ -123,41 +123,15 @@ def api():
 
 def test_no_token(api: TestClient):
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'data_id': treedir['mydir']['id']},
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}/favorites',
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
-
-def test_omit_params(api: TestClient):
-    email, passwd = client_info["email"], client_info["passwd"]
-    token = AppAuthManager().login(email, passwd)
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        headers={'token': token},
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={},
-        headers={'token': token},
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'???': '?????'},
-        headers={'token': token},
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_other_access_failed(api: TestClient):
     email, passwd = other_info['email'], other_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'data_id': 1},
+        f'/api/users/{client_info["id"]}/datas/1/favorites',
         headers={'token': token},
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
@@ -166,8 +140,7 @@ def test_data_no_exists(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'data_id': 9999999},
+        f'/api/users/{client_info["id"]}/datas/9999999/favorites',
         headers={'token': token},
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
@@ -176,8 +149,7 @@ def test_success(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'data_id': treedir['mydir']['hi.txt']['id']},
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}/favorites',
         headers={'token': token},
     )
     assert res.status_code == status.HTTP_201_CREATED
@@ -186,8 +158,7 @@ def test_success(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'data_id': treedir['mydir']['hi2.txt']['id']},
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi2.txt"]["id"]}/favorites',
         headers={'token': token},
     )
     assert res.status_code == status.HTTP_201_CREATED
@@ -196,8 +167,7 @@ def test_success(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/favorites',
-        json={'data_id': treedir['mydir']['hi.txt']['id']},
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}/favorites',
         headers={'token': token},
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST

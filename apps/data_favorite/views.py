@@ -6,24 +6,23 @@ from core.exc import DataIsAlreadyFavorited, DataNotFound
 
 
 data_favorite_router = APIRouter(
-    prefix='/api/users/{user_id}/datas/favorites',
-    tags=['storage', 'favorite'],
+    prefix='/api/users/{user_id}/datas/{data_id}/favorites',
+    tags=['storage', 'favorites'],
     responses={404: {'error': 'Not Found'}}
 )
 
 class DataFavoriteView:
     """
-    (POST)      /api/users/{user_id}/datas/favorites                    즐겨찾기 추가
-    (GET)       /api/users/{user_id}/datas/favorites?data_id=<int>      data_id상의 즐겨찾기된 데이터 갖고오기
-    (DELETE)    /api/users/{user_id}/datas/favorites/<favorite_id:int>  즐겨찾기 해제
+    (POST)      /api/users/{user_id}/datas/{data_id}/favorites                  즐겨찾기 추가
+    (GET)       /api/users/{user_id}/datas/{data_id}/favorites?data_id=<int>    data_id상의 즐겨찾기된 데이터 갖고오기
+    (DELETE)    /api/users/{user_id}/datas/{data_id}/favorites                  즐겨찾기 해제
     """
     
     @staticmethod
     @data_favorite_router.post(
         path='',
         status_code=status.HTTP_201_CREATED)
-    async def set_favorite(request: Request, user_id: int):
-        data_id: int = None
+    async def set_favorite(request: Request, user_id: int, data_id: int):
         """
         즐겨찾기 설정
         post form(json)
@@ -36,20 +35,6 @@ class DataFavoriteView:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='요청 토큰이 없습니다.')
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail='server error')
-
-        try:
-            # data_id 추출
-            req = await request.json()
-            data_id = req['data_id']
-        except (RuntimeError, json.decoder.JSONDecodeError, KeyError):
-            # json데이터 부정확함
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='즐겨찾기를 추가하고자 하는 파일 및 디렉토리가 선택되지 않았습니다.')
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -84,7 +69,10 @@ class DataFavoriteView:
 
     @staticmethod
     @data_favorite_router.delete(
-        path='/{favorite_id}',
+        path='',
         status_code=status.HTTP_204_NO_CONTENT)
-    async def unset_favorite(request: Request, user_id: int):
+    async def unset_favorite(request: Request, user_id: int, favorite_id):
+        """
+        즐겨찾기 해제
+        """
         pass
