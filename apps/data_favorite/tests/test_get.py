@@ -14,7 +14,6 @@ from system.bootloader import Bootloader
 
 
 client_info, admin_info, other_info = None, None, None
-other_info = None
 hi, hi2 = None, None
 treedir = {
     'mydir': {

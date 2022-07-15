@@ -48,6 +48,8 @@ class Bootloader:
         # 생성 할 테이블 Import
         from apps.user.models import User
         from apps.storage.models import DataInfo
+        from apps.tag.models import Tag
+        from apps.data_tag.models import DataTag
 
         Base = DatabaseGenerator.get_base()
         db_engine = DatabaseGenerator.get_engine()
@@ -66,9 +68,12 @@ class Bootloader:
         else:
             from apps.user.models import User
             from apps.storage.models import DataInfo
+            from apps.tag.models import Tag
+            from apps.data_tag.models import DataTag
+            
             session = DatabaseGenerator.get_session()
+            session.query(DataTag).filter(DataTag.id >= 0).delete()
+            session.query(Tag).filter(Tag.id >= 0).delete()
             session.query(DataInfo).filter(DataInfo.id >= 0).delete()
             session.query(User).filter(User.id >= 0).delete()
             session.commit()
-
-

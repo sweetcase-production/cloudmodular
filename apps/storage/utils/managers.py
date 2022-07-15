@@ -1,11 +1,8 @@
 import shutil
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from fastapi import UploadFile
-from fastapi.responses import FileResponse
 from sqlalchemy import and_
 import os
-import zipfile
-import random
 import datetime
 
 from apps.storage.models import DataInfo

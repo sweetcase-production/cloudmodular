@@ -18,6 +18,7 @@ SERVER = {
     'host': os.getenv('SERVER_HOST'),
     'port': int(os.getenv('SERVER_PORT')),
     'storage': os.getenv('SERVER_STORAGE') + '/cloudmodular',
+    'data-shared-length': int(os.getenv('DATA_SHARED_LENGTH')) * 24 * 60
 }
 DATABASE = {
     'type': os.getenv('DB_TYPE'),
