@@ -1,5 +1,8 @@
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from typing import List, Optional
+from apps.data_tag.models import DataTag
+from apps.storage.models import DataInfo
+from apps.tag.models import Tag
 
 from apps.user.models import User
 from apps.user.schemas import UserCreate, UserUpdate
@@ -119,7 +122,16 @@ class UserDBQueryDestroyer(QueryDestroyer):
                 user = q.filter(User.id == user_id).scalar()    
             # 모든 DB데이터 삭제
             if user:
-                q.filter(User.id == user.id).delete()
+
+                # Data 관련 Tag 제거
+                data_infos = session.query(DataInfo, DataTag, Tag).filter(and_(
+                    DataInfo.id == user.id,
+                    DataTag.datainfo_id == DataInfo.id,
+                    Tag.id == DataTag.tag_id,
+                )).all()
+                for _, _, tag in data_infos:
+                    session.delete(tag)
+                session.delete(user)
                 session.commit()
             else:
                 # 삭제 대상의 유저가 없는 경우

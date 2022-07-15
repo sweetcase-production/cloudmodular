@@ -2,6 +2,7 @@ from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey,
     Integer, String, Text, UniqueConstraint
 )
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 
 from system.connection.generators import DatabaseGenerator
@@ -20,4 +21,6 @@ class DataInfo(Base):
     is_dir = Column(Boolean, nullable=False)
     created = Column(DateTime(timezone=True), server_default=func.now())
     is_favorite = Column(Boolean, nullable=True, default=False)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+
+    user_id = Column(Integer, ForeignKey('user.id', ondelete='CASCADE', onupdate='CASCADE'))
+    user = relationship('User', backref=backref('user', cascade='delete'))

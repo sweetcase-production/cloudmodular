@@ -1,7 +1,9 @@
-from sqlalchemy import and_, func
-from typing import Optional, Sequence
+from sqlalchemy import and_, Sequence, func
+from typing import Optional
 
 from apps.storage.models import DataInfo
+from apps.data_tag.models import DataTag
+from apps.tag.models import Tag
 from apps.storage.schemas import DataInfoCreate
 from architecture.query.crud import (
     QueryCRUD,
@@ -55,16 +57,36 @@ class DataDBQueryDestroyer(QueryDestroyer):
         data: DataInfo = q.filter(DataInfo.id == data_id).scalar()
         root, name = data.root, data.name
         try:
-            if not data.is_dir:
-                # 파일
-                q.filter(DataInfo.id == data_id).delete()
-            else:
+            if data.is_dir:
                 # 디렉토리
+                # 하위 디렉토리 태그 전부 삭제
+                infos = session.query(DataInfo, DataTag, Tag) \
+                    .filter(and_(
+                        DataInfo.user_id == data.user_id,
+                        DataInfo.root.startswith(f'{data.root}{data.name}/')
+                    )) \
+                    .filter(and_(
+                        DataTag.datainfo_id == DataInfo.id,
+                        Tag.id == DataTag.id,
+                    )).all()
+                for _, _, tag in infos:
+                    session.delete(tag)
+
                 # 하위 데이터 전부 삭제
                 q.filter(and_(
                     DataInfo.user_id == data.user_id,
                     DataInfo.root.startswith(f'{data.root}{data.name}/')
                 )).delete(synchronize_session='fetch')
+            
+            # 디렉토리/파일 전부 해당되는 내용 -> 자기 자신과 태그 삭제
+            infos = session.query(DataTag, Tag).filter(and_(
+                    DataTag.datainfo_id == data_id,
+                    Tag.id == DataTag.tag_id,
+            )).all()
+            for _, tag in infos:
+                session.delete(tag)
+            # 파일
+            q.filter(DataInfo.id == data_id).delete()
             session.commit()
         except Exception as e:
             session.rollback()
@@ -143,7 +165,7 @@ class DataDBQueryUpdator(QueryUpdator):
                 # 디렉토리인 경우 하위 디렉토리의 루트 수정
                 dst_root = data_info.root + prev_name + '/'
                 src_root = data_info.root + new_name + '/'
-                targets = q.filter(and_(
+                q.filter(and_(
                     DataInfo.user_id == user_id,
                     DataInfo.root.startswith(dst_root),
                 )).update({

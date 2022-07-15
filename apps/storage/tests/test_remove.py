@@ -178,4 +178,5 @@ def test_success_remove_directory(api: TestClient):
     with DatabaseGenerator.get_session() as session:
         query = session.query(DataInfo)
         assert query.filter(DataInfo.root.startswith('/mydir/')).count() == 0
+        assert query.filter(DataInfo.name == 'mydir').count() == 0
 
