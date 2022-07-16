@@ -98,7 +98,8 @@ class DataDBQueryDestroyer(QueryDestroyer):
 
 class DataDBQueryReader(QueryReader):
     def __call__(
-        self, user_id: int,
+        self, 
+        user_id: Optional[int] = None,
         is_dir: Optional[bool] = None,
         data_id: Optional[int] = None,
         full_root: Optional[Sequence[str]] = None
@@ -113,17 +114,20 @@ class DataDBQueryReader(QueryReader):
         try:
             if data_id:
                 # search by data_id
-                data: DataInfo = q.filter(and_(
-                    DataInfo.user_id == user_id,
-                    DataInfo.id == data_id,
-                )).scalar()
+                query = q.filter(DataInfo.id == data_id)
+                if user_id:
+                    query.filter(DataInfo.user_id == user_id)
+                data = query.scalar()
+
             elif full_root:
                 # search by full_root
-                data: DataInfo = q.filter(and_(
-                    DataInfo.user_id == user_id,
+                query = q.filter(and_(
                     DataInfo.root == full_root[0],
                     DataInfo.name == full_root[1],
-                )).scalar()
+                ))
+                if user_id:
+                    query.filter(DataInfo.user_id == user_id)
+                data = query.scalar()
         except Exception as e:
             session.rollback()
             raise e

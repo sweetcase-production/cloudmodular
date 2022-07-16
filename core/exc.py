@@ -33,3 +33,11 @@ class DataFavoriteNotSelected(Exception):
 class DataIsAlreadyFavorited(Exception):
     def __init__(self):
         super().__init__("This data is already selected by favorite")
+
+class DataIsAlreadyShared(Exception):
+    def __init__(self):
+        super().__init__("This data is already shared")
+
+class DataIsNotShared(Exception):
+    def __init__(self):
+        super().__init__("This data is not shared")

@@ -80,14 +80,17 @@ class UserDBQueryReader(QueryReader):
         self,
         user_name: Optional[str] = None, 
         user_email: Optional[str] = None, 
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
+        is_admin: Optional[bool] = False,
     ) -> Optional[User]:
 
         session = DatabaseGenerator.get_session()
         q = session.query(User)
         user: User = None
         try:
-            if user_name:
+            if is_admin:
+                user = q.filter(User.is_admin == True).scalar()
+            elif user_name:
                 user = q.filter(User.name == user_name).scalar()
             elif user_email:
                 user = q.filter(User.email == user_email).scalar()

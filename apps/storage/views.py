@@ -181,7 +181,10 @@ class StorageView:
             # 파일 다운로드
             download_root = data['file']
             data['file'] = FileResponse(download_root)
-            background_tasks.add_task(background_remove_file, download_root)
+            
+            # 디렉토리일 경우에는 임시파일을 후에 지운다
+            if data['info']['is_dir']:
+                background_tasks.add_task(background_remove_file, download_root)
             return data['file']
 
     @staticmethod

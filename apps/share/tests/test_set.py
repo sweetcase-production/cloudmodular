@@ -11,6 +11,7 @@ from apps.storage.utils.managers import DataFileCRUDManager
 
 client_info, admin_info, other_info = None, None, None
 file_id = 0
+shared_id = 0
 TEST_EXAMLE_ROOT = 'apps/storage/tests/example'
 
 @pytest.fixture(scope='module')
@@ -65,102 +66,91 @@ def api():
     Bootloader.remove_database()
 
 def test_no_token(api: TestClient):
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={"tags": ["tag1", "tag2"]}
-    )
+    res = api.post(f'/api/users/{client_info["id"]}/datas/{file_id}/shares')
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_other_access_failed(api: TestClient):
     email, passwd = other_info['email'], other_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag2"]}
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
-def test_wrong_params(api: TestClient):
+def test_data_not_found(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
+        f'/api/users/{client_info["id"]}/datas/99999999/shares',
         headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={},
-        headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={'xxcfd': 'xcfds'},
-        headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={'tags': 1},
-        headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-def test_file_no_exists(api: TestClient):
-    email, passwd = client_info['email'], client_info['passwd']
-    token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/99999999/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag2"]}
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
-def test_validate_failed(api: TestClient):
+def test_success(api: TestClient):
+    global shared_id
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
+
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={'tags': ['tag1', 'a'*33]}
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_201_CREATED
+    shared_id = res.json()['shared_id']
+
+def test_try_share_again(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_success_create(api: TestClient):
+def test_reset_shared_data(api: TestClient):
+    from apps.share.models import DataShared
+    from system.bootloader import DatabaseGenerator
+
+    # is_active를 False로 전환
+    session = DatabaseGenerator.get_session()
+    shared = session.query(DataShared) \
+        .filter(DataShared.id == shared_id).scalar()
+    shared.is_active = False
+    session.commit()
+    
+    # 재공유
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag2"]}
-    )
-    
-    assert res.status_code == status.HTTP_201_CREATED
-    assert res.json() == {
-        'tags': [
-            {'tag_name': 'tag1'},
-            {'tag_name': 'tag2'},
-        ]
-    }
 
-def test_success_modify(api: TestClient):
-    email, passwd = admin_info['email'], admin_info['passwd']
-    token = AppAuthManager().login(email, passwd)
     res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag5", "tag7"]}
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
     )
     assert res.status_code == status.HTTP_201_CREATED
-    assert res.json() == {
-        'tags': [
-            {'tag_name': 'tag1'},
-            {'tag_name': 'tag5'},
-            {'tag_name': 'tag7'},
-        ]
-    }
+    assert res.json()['shared_id'] == shared_id
+
+def test_when_shared_expired(api: TestClient):
+    # shared_id는 그대로 사용
+    from apps.share.models import DataShared
+    from system.bootloader import DatabaseGenerator
+    from datetime import datetime, timedelta
+
+    # data를 1년전으로
+    session = DatabaseGenerator.get_session()
+    shared = session.query(DataShared) \
+        .filter(DataShared.id == shared_id).scalar()
+    shared.share_started = datetime.now() - timedelta(days=365)
+    session.commit()
+
+    # 재공유
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_201_CREATED
+    assert res.json()['shared_id'] == shared_id

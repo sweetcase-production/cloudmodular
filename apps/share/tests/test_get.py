@@ -7,16 +7,18 @@ from apps.user.utils.managers import UserCRUDManager
 from system.bootloader import Bootloader
 from apps.auth.utils.managers import AppAuthManager
 from apps.storage.utils.managers import DataFileCRUDManager
+from apps.share.utils.queries import DataSharedQuery
 
 
 client_info, admin_info, other_info = None, None, None
 file_id = 0
+shared_id = 0
 TEST_EXAMLE_ROOT = 'apps/storage/tests/example'
 
 @pytest.fixture(scope='module')
 def api():
     global client_info, admin_info, other_info
-    global file_id
+    global file_id, shared_id
     # Load Application
     Bootloader.migrate_database()
     Bootloader.init_storage()
@@ -58,6 +60,9 @@ def api():
     )
     file_id = files[0].id
 
+    shared = DataSharedQuery().create(file_id)
+    shared_id = shared.id
+
     yield TestClient(app)
 
     hi.close()
@@ -65,102 +70,73 @@ def api():
     Bootloader.remove_database()
 
 def test_no_token(api: TestClient):
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={"tags": ["tag1", "tag2"]}
-    )
+    res = api.get(f'/api/users/{client_info["id"]}/datas/{file_id}/shares')
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_other_access_failed(api: TestClient):
     email, passwd = other_info['email'], other_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag2"]}
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
-def test_wrong_params(api: TestClient):
+def test_data_not_found(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/999999/shares',
         headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={},
-        headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={'xxcfd': 'xcfds'},
-        headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        json={'tags': 1},
-        headers={'token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-def test_file_no_exists(api: TestClient):
-    email, passwd = client_info['email'], client_info['passwd']
-    token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/99999999/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag2"]}
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
-def test_validate_failed(api: TestClient):
+def test_success(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={'tags': ['tag1', 'a'*33]}
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == {
+        'shared_id': shared_id
+    }
+
+def test_expired(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    from apps.share.models import DataShared
+    from system.bootloader import DatabaseGenerator
+    from datetime import datetime, timedelta
+    # data를 1년전으로
+    session = DatabaseGenerator.get_session()
+    shared = session.query(DataShared) \
+        .filter(DataShared.id == shared_id).scalar()
+    shared.share_started = datetime.now() - timedelta(days=365)
+    session.commit()
+    # 만료는 설정해제된 것과 일치
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_success_create(api: TestClient):
-    email, passwd = client_info['email'], client_info['passwd']
-    token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag2"]}
-    )
-    
-    assert res.status_code == status.HTTP_201_CREATED
-    assert res.json() == {
-        'tags': [
-            {'tag_name': 'tag1'},
-            {'tag_name': 'tag2'},
-        ]
-    }
 
-def test_success_modify(api: TestClient):
+def test_shared_data_not_exsits(api: TestClient):
+    from apps.share.models import DataShared
+    from system.bootloader import DatabaseGenerator
+    # 삭제
+    session = DatabaseGenerator.get_session()
+    shared = session.query(DataShared) \
+        .filter(DataShared.id == shared_id).scalar()
+    session.delete(shared)
+    session.commit()
+    # Test
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    res = api.post(
-        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
-        headers={'token': token},
-        json={"tags": ["tag1", "tag5", "tag7"]}
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/shares',
+        headers={'token': token}
     )
-    assert res.status_code == status.HTTP_201_CREATED
-    assert res.json() == {
-        'tags': [
-            {'tag_name': 'tag1'},
-            {'tag_name': 'tag5'},
-            {'tag_name': 'tag7'},
-        ]
-    }
+    assert res.status_code == status.HTTP_400_BAD_REQUEST

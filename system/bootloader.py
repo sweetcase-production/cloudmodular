@@ -13,9 +13,11 @@ class Bootloader:
 
     Directory Setting
     cloudmodular
-        user1
-            storage
-        user2...
+        storage
+            user1
+                root
+            user2
+                root
     """
 
     @staticmethod
@@ -44,12 +46,12 @@ class Bootloader:
         """
         데이터베이스 마이그레이트
         """
-        
         # 생성 할 테이블 Import
         from apps.user.models import User
         from apps.storage.models import DataInfo
         from apps.tag.models import Tag
         from apps.data_tag.models import DataTag
+        from apps.share.models import DataShared
 
         Base = DatabaseGenerator.get_base()
         db_engine = DatabaseGenerator.get_engine()
@@ -70,8 +72,10 @@ class Bootloader:
             from apps.storage.models import DataInfo
             from apps.tag.models import Tag
             from apps.data_tag.models import DataTag
+            from apps.share.models import DataShared
             
             session = DatabaseGenerator.get_session()
+            session.query(DataShared).filter(DataShared.id >= 0).delete()
             session.query(DataTag).filter(DataTag.id >= 0).delete()
             session.query(Tag).filter(Tag.id >= 0).delete()
             session.query(DataInfo).filter(DataInfo.id >= 0).delete()
