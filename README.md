@@ -69,6 +69,7 @@ DB_USER=<DB User ID>
 DB_PASSWD=<DB User pswd>
 
 ADMIN_EMAIL=<관리자 이메일>
+ADMIN_PASSWD=<관리자 패스워드>
 ADMIN_EMAIL_PASSWD=<관리자 2차 이메일 패스워드>
 
 JWT_KEY=<jwt key>
