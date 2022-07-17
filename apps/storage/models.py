@@ -11,12 +11,15 @@ Base = DatabaseGenerator.get_base()
 
 class DataInfo(Base):
     __tablename__ = 'datainfo'
+    """
+    TODO root key에 대한 해결 필요
     __table_args__ = (
         UniqueConstraint('root', 'name', 'is_dir'),
     )
+    """
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    root = Column(Text, nullable=False)
+    root = Column(Text(65535), nullable=False)
     name = Column(String(255), nullable=False)
     is_dir = Column(Boolean, nullable=False)
     created = Column(DateTime(timezone=True), server_default=func.now())
