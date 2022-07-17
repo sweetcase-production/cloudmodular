@@ -1,8 +1,11 @@
 
 
 
+import traceback
 from typing import Optional
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
+
+from apps.search.managers import DataSearchManager
 
 
 search_router = APIRouter(
@@ -19,12 +22,41 @@ class SearchView:
         status_code=status.HTTP_200_OK)
     def search_datas(
         request: Request,
-        data_id: int,
-        recursive: bool = False,
-        users: Optional[str] = None,
-        favorite: bool = False,
-        shared: bool = False,
-        sort_create: bool = False,
-        sort_name: bool  = False,
+        user: str,                      # 사용자 이름
+        root: str,                      # 탐색 위치(디렉토리만)
+        recursive: int = 0,             # 하위 부분까지 전부 탐색
+        favorite: int = 0,              # 즐겨찾기 여부
+        shared: int = 0,                # 공유 여부
+        tags: Optional[str] = None,     # 태그가 포함된 데이터만
+        word: Optional[str] = None,     # 연관검색어
+        sort_create: int = 0,           # 생성 순 정렬
+        sort_name: int = 0,             # 이름 순 정렬
     ):
-        pass
+        
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+
+        try:
+            return DataSearchManager().search(
+                token, user, root, recursive, favorite,
+                shared, tags, word, sort_create, sort_name
+            )
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='권한이 없습니다.')
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')

@@ -52,6 +52,10 @@ if __name__ == '__main__':
     # 분기 실행
     if args.method == 'run-app':
         # APP 실행
+        """
+        TODO:
+        Admin이 있는 지 확인한 다음, 없으면 새로 생성한다.
+        """
         if args.type == 'dev':
             uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
         elif args.type == 'prod':
@@ -62,15 +66,13 @@ if __name__ == '__main__':
             Bootloader.migrate_database()
             Bootloader.init_storage()
         elif args.type == 'prod':
-            # TODO Check Admin Data
-            # TODO DB LOAD
-            # TODO insert Admin Data
-            # TODO Make Directory
-            raise NotImplementedError
+            Bootloader.migrate_database()
+            Bootloader.init_storage()
     elif args.method == 'clean':
-        # DB, Storage 삭제
+        # 데이터 전부 삭제
         if args.type == 'prod':
-            raise NotImplementedError
+            Bootloader.remove_storage()
+            Bootloader.remove_database()
         elif args.type == 'dev':
             Bootloader.remove_storage()
             Bootloader.remove_database()

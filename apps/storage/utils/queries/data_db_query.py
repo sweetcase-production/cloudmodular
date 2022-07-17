@@ -110,7 +110,7 @@ class DataDBQueryReader(QueryReader):
         """
         session = DatabaseGenerator.get_session()
         q = session.query(DataInfo)
-
+        data = None
         try:
             if data_id:
                 # search by data_id

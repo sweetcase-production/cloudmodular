@@ -1,3 +1,4 @@
+from re import M
 import pytest
 from fastapi.testclient import TestClient
 from fastapi import UploadFile, status
@@ -5,12 +6,14 @@ from fastapi import UploadFile, status
 from main import app
 from apps.data_favorite.utils.query.data_favorite_query import DataFavoriteQuery
 from apps.share.utils.queries import DataSharedQuery
+from apps.auth.utils.managers import AppAuthManager
 from apps.user.utils.managers import UserCRUDManager
 from apps.storage.utils.managers import (
     DataFileCRUDManager,
     DataDirectoryCRUDManager,
 )
 from system.bootloader import Bootloader
+from apps.data_tag.utils.queries import DataTagQuery
 
 
 client_info, admin_info, other_info = None, None, None
@@ -18,7 +21,7 @@ other_info = None
 hi, hi2 = None, None
 """
 mydir과 mydir/hi.txt만 공유 설정
-mydir/hi.txt와 subdir에 즐겨찾기 설정
+mydir/hi.txt와 mydir/subdir에 즐겨찾기 설정
 """
 treedir = {
     'mydir': {
@@ -129,6 +132,14 @@ def api():
     DataFavoriteQuery() \
         .update(client_info['id'], treedir['mydir']['subdir']['id'], True)
 
+    # 태그 달기
+    DataTagQuery().create(
+        data_id=treedir['mydir']['subdir']['id'], tags=['tag1']
+    )
+    DataTagQuery().create(
+        data_id=treedir['mydir']['hi.txt']['id'], tags=['tag1', 'tag2']
+    )
+
     # Return test api
     yield TestClient(app)
     # Close all files and remove all data
@@ -137,3 +148,306 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
+
+def test_no_token(api: TestClient):
+    res = api.get(
+        '/api/search/datas', 
+        params={'root': '/', 'user': client_info['name']}
+    )
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_client_access_others_data(api: TestClient):
+    email, passwd = other_info["email"], other_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={'root': '/mydir', 'user': client_info['name']},
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+    
+    # 전체 탐색
+    res = api.get(
+        '/api/search/datas',
+        params={'root': '/', 'user': client_info['name']},
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_all_search_on_current_root(api: TestClient):
+    # 현재 위치에서의 파일/디렉토리만 검색
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'], 
+            'sort_name': 1
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['id'],
+            'root': '/',
+            'is_dir': True,
+            'name': 'mydir',
+            'is_favorite': False,
+            'shared_id': treedir['mydir']['shared_id'],
+        }
+    ]
+
+def test_all_search_on_subdir_root(api: TestClient):
+    # subdir위치에서의 파일 디렉토리 검색
+    email, passwd = admin_info["email"], admin_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/mydir/subdir/', 
+            'user': client_info['name'], 
+            'sort_name': 1
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['subdir']['hi.txt']['id'],
+            'root': '/mydir/subdir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        }
+    ]
+
+def test_all_search_by_recursive(api: TestClient):
+    # 전체검색 + 하위 데이터까지 모조리 다
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['id'],
+            'root': '/',
+            'is_dir': True,
+            'name': 'mydir',
+            'is_favorite': False,
+            'shared_id': treedir['mydir']['shared_id'],
+        },
+        {
+            'id': treedir['mydir']['subdir']['id'],
+            'root': '/mydir/',
+            'is_dir': True,
+            'name': 'subdir',
+            'is_favorite': True,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        },
+        {
+            'id': treedir['mydir']['subdir']['hi.txt']['id'],
+            'root': '/mydir/subdir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi2.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi2.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        },
+    ]
+
+def test_search_shared(api: TestClient):
+    # 공유된 데이터만.
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+            'shared': 1,
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['id'],
+            'root': '/',
+            'is_dir': True,
+            'name': 'mydir',
+            'is_favorite': False,
+            'shared_id': treedir['mydir']['shared_id'],
+        },
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        },
+    ]
+
+def test_search_by_favorite(api: TestClient):
+
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+            'favorite': 1,
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['subdir']['id'],
+            'root': '/mydir/',
+            'is_dir': True,
+            'name': 'subdir',
+            'is_favorite': True,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        }
+    ]
+
+def test_certain_word(api: TestClient):
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+            'word': 'txt',
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        },
+        {
+            'id': treedir['mydir']['subdir']['hi.txt']['id'],
+            'root': '/mydir/subdir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi2.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi2.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        },
+    ]
+
+def test_tags(api: TestClient):
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+            'tags': 'tag1,tag2'
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['subdir']['id'],
+            'root': '/mydir/',
+            'is_dir': True,
+            'name': 'subdir',
+            'is_favorite': True,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        },
+    ]
+    
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root': '/', 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+            'tags': 'tag2'
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        },
+    ]
