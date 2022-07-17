@@ -52,10 +52,8 @@ if __name__ == '__main__':
     # 분기 실행
     if args.method == 'run-app':
         # APP 실행
-        """
-        TODO:
-        Admin이 있는 지 확인한 다음, 없으면 새로 생성한다.
-        """
+        # Admin이 있는 지 확인한 다음, 없으면 새로 생성한다.
+        Bootloader.checking_admin()
         if args.type == 'dev':
             uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
         elif args.type == 'prod':

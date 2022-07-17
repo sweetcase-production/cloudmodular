@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 
 def _get_database_info():
     t = os.getenv('DB_TYPE')
@@ -27,6 +28,7 @@ DATABASE = {
 ADMIN = {
     'email': os.getenv('ADMIN_EMAIL'),
     'email_2nd_pswd': os.getenv('ADMIN_EMAIL_PASSWD'),
+    'passwd': os.getenv('ADMIN_PASSWD'),
 }
 JWT = {
     'key': os.getenv('JWT_KEY'),

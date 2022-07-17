@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from settings.base import SERVER, DATABASE
+from settings.base import SERVER, DATABASE, ADMIN
 from system.connection.generators import DatabaseGenerator
 
 
@@ -81,3 +81,24 @@ class Bootloader:
             session.query(DataInfo).filter(DataInfo.id >= 0).delete()
             session.query(User).filter(User.id >= 0).delete()
             session.commit()
+
+    @staticmethod
+    def checking_admin():
+        """
+        Admin 계정이 있는 지 체크하고
+        없으면 새로 생성한다.
+        """
+        from apps.user.utils.queries.user_db_query import UserDBQuery
+        from apps.user.utils.queries.user_storage_query import UserStorageQuery
+        from apps.user.schemas import UserCreate
+        
+        admin_data = UserDBQuery().read(is_admin=True)
+        if not admin_data:
+            admin_data = UserDBQuery().create(UserCreate(
+                name='admin',
+                email=ADMIN['email'],
+                passwd=ADMIN['passwd'],
+                is_admin=True,
+                storage_size=5,
+            ))
+            UserStorageQuery().create(user_id=admin_data.id, force=True)
