@@ -3,6 +3,7 @@ from typing import List
 from apps.data_tag.models import DataTag
 from apps.storage.models import DataInfo
 from apps.tag.models import Tag
+from apps.tag.util.validator import tag_validator
 from architecture.query.crud import QueryCRUD, QueryCreator, QueryReader
 from core.exc import DataNotFound
 from system.connection.generators import DatabaseGenerator
@@ -20,7 +21,7 @@ class DataTagQueryCreator(QueryCreator):
         # Check Validate of tags
         tag_set = set()
         for tag in tags:
-            if not isinstance(tag, str) or not (0 < len(tag) <= 32):
+            if not tag_validator(tag):
                 raise ValueError('Tag validate failed')
             if tag in tag_set:
                 # 동일한 이름의 태그는 무시

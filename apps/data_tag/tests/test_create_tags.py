@@ -131,6 +131,17 @@ def test_validate_failed(api: TestClient):
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
+    # 특수문자 사용 불가.
+    token = AppAuthManager().login(email, passwd)
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/{file_id}/tags',
+        headers={'token': token},
+        json={'tags': ['tag1', 'afv,ds']}
+    )
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    
+
 def test_success_create(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
