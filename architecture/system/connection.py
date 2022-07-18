@@ -121,7 +121,6 @@ class ProgramedRDBConnection(RDBConnection, ABC):
         user: str,
         passwd: str,
     ):
-    
         self.host = host
         self.port = port
         self.database = database

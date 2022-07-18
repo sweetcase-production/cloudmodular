@@ -23,6 +23,14 @@ class FirstSettingTokenGenerator(AuthTokenGenerator):
     token_length = 10
 
 def decode_token(token: str, gen_type: Type[AuthTokenGenerator]):
+    """
+    Token 디코더
+
+    :param token: 디코딩 대상 토큰
+    :param gen_type: Token Generator Type
+
+    :return: (이메일, 주제(issue))
+    """
     try:
         decoded_token = gen_type().decode(token)
         op_email = decoded_token['email']

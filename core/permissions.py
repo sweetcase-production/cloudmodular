@@ -5,7 +5,7 @@ from architecture.query.permission import (
 
 
 class PermissionIssueLoginChecker(PermissionIssueChecker):
-    ref_v = 'logined'
+    ref_v = 'logined'   # 로그인 여부
 
 
 class PermissionClientChecker(PermissionUserLevelChecker):

@@ -15,6 +15,12 @@ class AuthTokenGenerator(metaclass=ABCMeta):
     token_length: int               # 분단위
 
     def generate(self, input_data: Dict[str, Any]):
+        """
+        Token 생성
+
+        :param input_data: 토큰 생성을 위한 데이터
+        :return: 토큰
+        """
         copied = input_data.copy()
         copied[self.issue_key] = self.issue_name
         copied['iat'] = datetime.datetime.now()
@@ -24,6 +30,16 @@ class AuthTokenGenerator(metaclass=ABCMeta):
         return self.token_builder().write(**copied)
 
     def decode(self, s: str):
+        """
+        Token 디코딩
+
+        :param s: 디코딩 대상 토큰
+        :return:
+            {
+                'exp': 만료 시각,
+                ...
+            }
+        """
         decoded = self.token_builder().read(s)
         try:
             issue = decoded[self.issue_key]
