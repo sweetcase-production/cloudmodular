@@ -55,9 +55,10 @@ if __name__ == '__main__':
         # APP 실행
         # Admin이 있는 지 확인한 다음, 없으면 새로 생성한다.
         Bootloader.checking_admin()
+
+        # Cors 설정
         origins = list()
         if args.type == 'dev':
-            # Cors 설정
             origins.append("http://localhost:3000")
         elif args.type == 'prod':
             origins.append(f"http://localhost:{SERVER['port']}")
@@ -68,6 +69,7 @@ if __name__ == '__main__':
             allow_methods=['*'],
             allow_headers=['token'],
         )
+        # App 실행
         uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
     elif args.method == 'migrate':
         # Database, Storage Migration
