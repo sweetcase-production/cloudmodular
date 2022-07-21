@@ -4,6 +4,7 @@ load_dotenv()
 from system.connection.generators import DatabaseGenerator
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import argparse
 
@@ -54,10 +55,20 @@ if __name__ == '__main__':
         # APP 실행
         # Admin이 있는 지 확인한 다음, 없으면 새로 생성한다.
         Bootloader.checking_admin()
+        origins = list()
         if args.type == 'dev':
-            uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
+            # Cors 설정
+            origins.append("http://localhost:3000")
         elif args.type == 'prod':
-            uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
+            origins.append(f"http://localhost:{SERVER['port']}")
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=['*'],
+            allow_headers=['token'],
+        )
+        uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
     elif args.method == 'migrate':
         # Database, Storage Migration
         if args.type == 'dev':
