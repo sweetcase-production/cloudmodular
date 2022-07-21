@@ -29,7 +29,8 @@ class DataSearchManager(FrontendManager):
     def search(
         self, token: str,
         user: str,                      # 사용자 이름
-        root: str,                      # 탐색 위치(디렉토리만)
+        root: Optional[str] = None,     # 탐색 위치(디렉토리만)
+        root_id: Optional[int] = None,  # 탐색 위치(디렉토리 아이디)
         recursive: int = 0,             # 하위 부분까지 전부 탐색
         favorite: int = 0,              # 즐겨찾기 여부
         shared: int = 0,                # 공유 여부
@@ -59,12 +60,28 @@ class DataSearchManager(FrontendManager):
             # 해당 유저가 없으면 검색 결과가 없는 것으로 설정
             return []
         # 대상 data 탐색
-        if root != '/':
-            splited = root[:-1].split('/')
-            root_query = ['/'.join(splited[:-1]) + '/', splited[-1]]
-            data_value = DataDBQuery().read(full_root=root_query, is_dir=True)
-            if not data_value:
-                return []
+        if (not root) and (root_id is None):
+            # root, root_id 둘 중에 하나 있어야 한다.
+            raise ValueError()
+        if root_id is not None:
+            # root_id가 주어져 있는 경우
+            if root_id == 0:
+                root = '/'
+            else:
+                root_info: DataInfo = DataDBQuery().read(user_id=user_value.id, data_id=root_id)
+                if not root_info or (not root_info.is_dir):
+                    # 데이터 없음 or 디렉토리가 아님
+                    return []
+                root = f'{root_info.root}{root_info.name}/'
+        else:
+            # Root가 주어져 있는 경우
+            if root != '/':
+                # Root Checking
+                splited = root[:-1].split('/')
+                root_query = ['/'.join(splited[:-1]) + '/', splited[-1]]
+                data_value = DataDBQuery().read(full_root=root_query, is_dir=True)
+                if not data_value:
+                    return []
         # 검색 시작
         shared_len = SERVER['data-shared-length']
         session = DatabaseGenerator.get_session()

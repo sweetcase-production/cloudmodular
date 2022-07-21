@@ -225,6 +225,32 @@ def test_all_search_on_subdir_root(api: TestClient):
         }
     ]
 
+def test_all_search_on_subdir_root_by_root_id(api: TestClient):
+    # subdir위치에서의 파일 디렉토리 검색
+    email, passwd = admin_info["email"], admin_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root_id': treedir['mydir']['subdir']['id'], 
+            'user': client_info['name'], 
+            'sort_name': 1
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['subdir']['hi.txt']['id'],
+            'root': '/mydir/subdir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        }
+    ]
+
+
 def test_all_search_by_recursive(api: TestClient):
     # 전체검색 + 하위 데이터까지 모조리 다
     email, passwd = client_info["email"], client_info["passwd"]
@@ -282,6 +308,65 @@ def test_all_search_by_recursive(api: TestClient):
             'shared_id': -1,
         },
     ]
+
+def test_all_by_recursive_in_root_id(api: TestClient):
+    # 전체검색 + 하위 데이터까지 모조리 다
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root_id': 0, 
+            'user': client_info['name'],
+            'recursive': 1,
+            'sort_name': 1,
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == [
+        {
+            'id': treedir['mydir']['id'],
+            'root': '/',
+            'is_dir': True,
+            'name': 'mydir',
+            'is_favorite': False,
+            'shared_id': treedir['mydir']['shared_id'],
+        },
+        {
+            'id': treedir['mydir']['subdir']['id'],
+            'root': '/mydir/',
+            'is_dir': True,
+            'name': 'subdir',
+            'is_favorite': True,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': True,
+            'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+        },
+        {
+            'id': treedir['mydir']['subdir']['hi.txt']['id'],
+            'root': '/mydir/subdir/',
+            'is_dir': False,
+            'name': 'hi.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        },
+        {
+            'id': treedir['mydir']['hi2.txt']['id'],
+            'root': '/mydir/',
+            'is_dir': False,
+            'name': 'hi2.txt',
+            'is_favorite': False,
+            'shared_id': -1,
+        },
+    ]
+
 
 def test_search_shared(api: TestClient):
     # 공유된 데이터만.
