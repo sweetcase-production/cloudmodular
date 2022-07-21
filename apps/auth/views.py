@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, status
 
 from apps.auth.utils.managers import AppAuthManager
+from apps.user.utils.managers import UserCRUDManager
 
 auth_router = APIRouter(
     prefix='/api/auth',
@@ -30,7 +31,12 @@ class TokenGenerateView:
                 email = req['email']
                 passwd = req['passwd']
                 token = AppAuthManager().login(email, passwd)
-                return {'token': token}
+                # 데이터 검색
+                user = UserCRUDManager().read(user_email=email)
+                return {
+                    'token': token, 
+                    'user_id': user.id,
+                }
             else:
                 # 알 수 없는 요청
                 raise HTTPException(

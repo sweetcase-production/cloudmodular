@@ -439,6 +439,7 @@ class DataManager(FrontendManager):
         # 리턴 데이터
         res = {
             'info': {
+                'created': data_info.created,
                 'root': data_info.root,
                 'is_dir': data_info.is_dir,
                 'name': data_info.name,
@@ -494,6 +495,7 @@ class DataManager(FrontendManager):
             raise e
         else:
             return {
+                'created': res.created,
                 'data_id': res.id,
                 'root': res.root,
                 'name': res.name,

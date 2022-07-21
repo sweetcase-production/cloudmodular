@@ -142,6 +142,7 @@ class DataSearchManager(FrontendManager):
                     and shared.share_started + timedelta(minutes=shared_len) >= datetime.now():
                     shared_id = shared.id
             res.append({
+                'created': data.created,
                 'id': data.id,
                 'root': data.root,
                 'is_dir': data.is_dir,

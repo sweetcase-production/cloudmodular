@@ -22,7 +22,8 @@ def api():
         'storage_size': 5
     }
     # 테스트 대상의 사용자 생성
-    UserCRUDManager().create(**user_info)
+    user = UserCRUDManager().create(**user_info)
+    user_info['id'] = user.id
     # Test용 api 리턴
     yield TestClient(app)
     # Remove Application
@@ -39,6 +40,7 @@ def test_success_get_login_token(api: TestClient):
     res = api.post('/api/auth/token', json=req)
     assert res.status_code == status.HTTP_201_CREATED
     assert 'token' in res.json()
+    assert res.json()['user_id'] == user_info['id']
 
 def test_passwd_failed_while_get_login_token(api: TestClient):
     email = user_info['passwd']

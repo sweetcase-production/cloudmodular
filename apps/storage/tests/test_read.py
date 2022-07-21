@@ -163,6 +163,7 @@ def test_search_file(api: TestClient):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
+        'created': res.json()['created'],
         'root': '/mydir/',
         'is_dir': False,
         'name': 'hi.txt',
@@ -179,6 +180,7 @@ def test_search_directory(api: TestClient):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
+        'created': res.json()['created'],
         'root': '/',
         'is_dir': True,
         'name': 'mydir',
@@ -195,6 +197,7 @@ def test_admin_can_search_client_repo(api: TestClient):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
+        'created': res.json()['created'],
         'root': '/',
         'is_dir': True,
         'name': 'mydir',

@@ -215,6 +215,7 @@ def test_update_filename(api: TestClient):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
+        'created': res.json()['created'],
         'data_id': treedir["mydir"]["subdir"]["hi.txt"]["id"],
         'root': '/mydir/subdir/',
         'name': 'new.txt',
@@ -236,6 +237,7 @@ def test_update_dirname(api: TestClient):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
+        'created': res.json()['created'],
         'data_id': treedir['mydir']['id'],
         'root': '/',
         'name': 'newdir',

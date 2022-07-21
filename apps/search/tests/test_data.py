@@ -189,8 +189,14 @@ def test_all_search_on_current_root(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    # 2022-01-01T24:24:24
+    assert outputs == [
         {
+            
             'id': treedir['mydir']['id'],
             'root': '/',
             'is_dir': True,
@@ -214,8 +220,13 @@ def test_all_search_on_subdir_root(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
+            
             'id': treedir['mydir']['subdir']['hi.txt']['id'],
             'root': '/mydir/subdir/',
             'is_dir': False,
@@ -239,7 +250,11 @@ def test_all_search_on_subdir_root_by_root_id(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['subdir']['hi.txt']['id'],
             'root': '/mydir/subdir/',
@@ -266,7 +281,11 @@ def test_all_search_by_recursive(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['id'],
             'root': '/',
@@ -324,7 +343,11 @@ def test_all_by_recursive_in_root_id(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['id'],
             'root': '/',
@@ -384,7 +407,11 @@ def test_search_shared(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['id'],
             'root': '/',
@@ -419,7 +446,11 @@ def test_search_by_favorite(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['subdir']['id'],
             'root': '/mydir/',
@@ -453,7 +484,11 @@ def test_certain_word(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['hi.txt']['id'],
             'root': '/mydir/',
@@ -495,7 +530,11 @@ def test_tags(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['subdir']['id'],
             'root': '/mydir/',
@@ -526,7 +565,11 @@ def test_tags(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.json() == [
+    outputs = res.json()
+    for output in outputs:
+        # 날짜 데이터만 있는지 확인하고 실제 검토 X
+        del output['created']
+    assert outputs == [
         {
             'id': treedir['mydir']['hi.txt']['id'],
             'root': '/mydir/',
