@@ -113,8 +113,7 @@ class StorageView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='해당 디렉토리가 이미 존재합니다.')
-        except Exception as e:
-            print(e)
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
@@ -240,7 +239,7 @@ class StorageView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='해당 데이터가 이미 존재합니다.')
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
