@@ -39,7 +39,6 @@ class DataSearchManager(FrontendManager):
         sort_create: int = 0,           # 생성 순 정렬
         sort_name: int = 0,             # 이름 순 정렬
     ):
-
         # token checking
         op_email, issue = decode_token(token, LoginTokenGenerator)
         operator: User = UserDBQuery().read(user_email=op_email)
@@ -117,7 +116,7 @@ class DataSearchManager(FrontendManager):
             # 이름, 생성 순 정렬
             query = query.order_by(
                 DataInfo.is_dir.desc(), 
-                DataInfo.created.asc(), 
+                DataInfo.created.desc(), 
                 DataInfo.name.asc()
             )
         elif sort_name:
@@ -128,7 +127,7 @@ class DataSearchManager(FrontendManager):
         elif sort_create:
             query = query.order_by(
                 DataInfo.is_dir.desc(), 
-                DataInfo.created.asc()
+                DataInfo.created.desc()
             )
         records = query.all()
         res = list()
