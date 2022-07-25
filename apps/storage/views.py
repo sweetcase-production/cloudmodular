@@ -1,6 +1,6 @@
 import json
 from typing import List, Optional
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, UploadFile, status
 import pydantic
 from fastapi.responses import FileResponse
 
@@ -282,3 +282,5 @@ class StorageView:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
+        else:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
