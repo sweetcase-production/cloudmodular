@@ -225,6 +225,15 @@ def test_update_filename(api: TestClient):
     assert os.path.isfile(
         f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/subdir/new.txt'
     )
+    with DatabaseGenerator.get_session() as session:
+        # DB 변경 여부 확인
+        query = session.query(DataInfo)
+        assert query.filter(DataInfo.root == '/mydir/subdir/') \
+            .filter(DataInfo.name == 'hi.txt').count() == 0
+        assert query.filter(DataInfo.root == '/mydir/subdir/') \
+            .filter(DataInfo.name == 'new.txt').count() == 1
+        session.close()
+    
 
 def test_update_dirname(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']

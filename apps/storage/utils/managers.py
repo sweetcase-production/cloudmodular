@@ -158,7 +158,7 @@ class DataFileCRUDManager(CRUDManager):
         try:
             # DB 데이터 수정
             res = DataDBQuery().update(
-                data_info=data, 
+                data_id=data.id, 
                 new_name=new_name, user_id=user_id
             )
         except Exception as e:
@@ -309,7 +309,7 @@ class DataDirectoryCRUDManager(CRUDManager):
         try:
             # DB 데이터 수정
             res = DataDBQuery().update(
-                data_info=data, new_name=new_name, user_id=user_id
+                data_id=data.id, new_name=new_name, user_id=user_id
             )
         except Exception as e:
             # DB 데이터 수정에 에러 발생

@@ -146,18 +146,16 @@ class DataDBQueryReader(QueryReader):
 class DataDBQueryUpdator(QueryUpdator):
     def __call__(
         self, new_name: str,
-        data_info: Optional[DataInfo] = None,
-        user_id: Optional[int] = None,
-        data_id: Optional[int] = None,
+        user_id: int,
+        data_id: int,
     ) -> DataInfo:
         session = DatabaseGenerator.get_session()
         q = session.query(DataInfo)
-        if not data_info:
-            # 아이디로 찾는 경우
-            data_info = q.filter(and_(
-                DataInfo.user_id == user_id,
-                DataInfo.data_id == data_id,
-            )).scalar()
+        # 아이디로 찾는 경우
+        data_info = q.filter(and_(
+            DataInfo.user_id == user_id,
+            DataInfo.id == data_id,
+        )).scalar()
         if not data_info:
             # 그래도 못찾음
             raise DataNotFound()
@@ -180,9 +178,10 @@ class DataDBQueryUpdator(QueryUpdator):
         except Exception as e:
             session.rollback()
             raise e
+        else:
+            return data_info
         finally:
             session.close()
-            return data_info
 
 class DataDBQuery(QueryCRUD):
     creator = DataDBQueryCreator
