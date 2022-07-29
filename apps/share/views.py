@@ -12,7 +12,7 @@ data_shared_router = APIRouter(
 )
 
 data_shared_download_router = APIRouter(
-    prefix='/api/datas/shares/{shared_id}/download',
+    prefix='/api/datas/shares/{shared_id}',
     tags=['storage', 'share'],
     responses={404: {'error': 'Not Found'}}
 )
@@ -165,12 +165,17 @@ class DataSharedView:
 class DataSharedDataDownloadView:
     """
     (GET)   /api/datas/shares/<shared_id:int>/download  공유 데이터 다운로드
+    (GET)   /api/datas/shares/<shared_id:int>/info      공유 데이터의 정보 갖고오기
     """
     @staticmethod
     @data_shared_download_router.get(
-        path='',
+        path='/download',
         status_code=status.HTTP_200_OK)
-    def download_shared_data(request: Request, shared_id: int, background_tasks: BackgroundTasks):
+    def download_shared_data(
+        request: Request, 
+        shared_id: int, 
+        background_tasks: BackgroundTasks
+    ):
         try:
             download_root, is_dir = \
                 DataSharedManager().download_shared_data(shared_id)
@@ -188,3 +193,26 @@ class DataSharedDataDownloadView:
                 # 디렉토리일 경우 임시파일을 지운다.
                 background_tasks.add_task(background_remove_file, download_root)
             return data
+
+    @staticmethod
+    @data_shared_download_router.get(
+        path='/info',
+        status_code=status.HTTP_200_OK)
+    def get_info_of_shared(request: Request, shared_id: int):
+        
+        try:
+            data_info = DataSharedManager().get_info_of_shared_data(shared_id)
+        except DataIsNotShared:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='공유가 되어 있지 않거나 만료되었습니다.')
+        except DataNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='해당 파일 및 디렉토리가 존재하지 않습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            return data_info

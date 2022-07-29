@@ -1,4 +1,3 @@
-from re import M
 import pytest
 from fastapi.testclient import TestClient
 from fastapi import UploadFile, status

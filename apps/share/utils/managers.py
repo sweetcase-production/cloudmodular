@@ -121,18 +121,39 @@ class DataSharedManager(FrontendManager):
             )
         if not shared or not shared.is_active:
             raise DataIsNotShared()
-        if shared.share_started + timedelta(seconds=SERVER['data-shared-length'] * 60) <= datetime.now():
+        if shared.share_started + timedelta(seconds=SERVER['data-shared-length'] * 60) \
+            <= datetime.now():
             raise DataIsNotShared()
         else:
             return shared.id
 
-    def download_shared_data(self, shared_id: int):
+    def get_info_of_shared_data(sef, shared_id: int):
+        # Shared 정보 갖고오기
         shared: DataShared = DataSharedQuery().read(shared_id=shared_id)
-
         # 공유 여부 체크
         if not shared or not shared.is_active:
             raise DataIsNotShared()
-        if shared.share_started + timedelta(seconds=SERVER['data-shared-length'] * 60) <= datetime.now():
+        if shared.share_started + timedelta(seconds=SERVER['data-shared-length'] * 60) \
+            <= datetime.now():
+            raise DataIsNotShared()
+        # Data 정보 가지고 오기
+        data_info = DataDBQuery().read(data_id=shared.datainfo_id)
+        if not data_info:
+            raise DataNotFound()
+        # Return
+        return {
+            'root': data_info.root,
+            'name': data_info.name,
+            'is_dir': data_info.is_dir,
+        }
+
+    def download_shared_data(self, shared_id: int):
+        shared: DataShared = DataSharedQuery().read(shared_id=shared_id)
+        # 공유 여부 체크
+        if not shared or not shared.is_active:
+            raise DataIsNotShared()
+        if shared.share_started + timedelta(seconds=SERVER['data-shared-length'] * 60) \
+            <= datetime.now():
             raise DataIsNotShared()
 
         # DataInfo 체크
