@@ -1,4 +1,4 @@
-# CloudModular (진행중)
+# CloudModular [Server]
 
 <div align="center">
     <img src="https://img.shields.io/badge/fastapi-109989?style=flat-square&logo=FASTAPI&logoColor=white" />
