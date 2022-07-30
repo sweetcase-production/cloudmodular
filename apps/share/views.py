@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status, Response
 from fastapi.responses import FileResponse
 
 from apps.share.utils.managers import DataSharedManager
@@ -161,6 +161,9 @@ class DataSharedView:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
+        else:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 class DataSharedDataDownloadView:
     """
