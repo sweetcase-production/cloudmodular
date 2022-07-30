@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status, Response
 
 from apps.data_favorite.utils.managers import DataFavoriteManager
 from core.exc import DataFavoriteNotSelected, DataIsAlreadyFavorited, DataNotFound, IsNotDirectory
@@ -134,4 +134,6 @@ class DataFavoriteView:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
+        else:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         
