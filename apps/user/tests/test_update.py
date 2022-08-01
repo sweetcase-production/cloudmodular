@@ -59,7 +59,7 @@ def test_no_token(api: TestCase):
     res = api.patch(f'/api/users/{client_info1["id"]}')
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
-def test_not_admin(api: TestCase):
+def test_not_admin_no_same_user(api: TestCase):
     email, passwd = client_info1['email'], client_info1['passwd']
     token = AppAuthManager().login(email, passwd)
 
@@ -183,10 +183,11 @@ def test_change_success(api: TestCase):
     user_data: User = UserCRUDManager().read(user_email=client_info1['email'])
     assert user_data.name == req['name']
     assert user_data.passwd == req['passwd']
+    client_info1['passwd'] = user_data.passwd
 
 
-def test_change_only_name(api: TestCase):
-    email, passwd = admin_info['email'], admin_info['passwd']
+def test_change_only_name_and_client_mine(api: TestCase):
+    email, passwd = client_info1['email'], client_info1['passwd']
     token = AppAuthManager().login(email, passwd)
     
     req = {

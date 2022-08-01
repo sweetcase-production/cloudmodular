@@ -11,6 +11,9 @@ from core.permissions import (
     PermissionAdminChecker as AdminOnly,
     PermissionIssueLoginChecker as LoginedOnly,
 )
+from architecture.query.permission import (
+    PermissionSameUserChecker as OnlyMine,
+)
 from architecture.query.permission import PermissionSameUserChecker as SameOnly
 from core.token_generators import LoginTokenGenerator
 
@@ -160,8 +163,13 @@ class UserManager(FrontendManager):
         operator: User = UserCRUDManager().read(user_email=op_email)
         if not operator:
             raise PermissionError()
-        if not bool(AdminOnly(operator.is_admin) & LoginedOnly(issue)):
-            # 관리자 + 로그인 상태여야 한다.
+        # Admin이거나, client and 자기 자신이어야 한다
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | 
+                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, pk))
+            )
+        ):
             raise PermissionError()
         # 유저 업데이트
         user: User = UserCRUDManager().update(
