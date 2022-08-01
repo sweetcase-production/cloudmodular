@@ -95,15 +95,6 @@ def test_omit_some_req(api: TestCase):
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    req['name'] = 'changed1'
-    res = api.patch(
-        f'/api/users/{client_info1["id"]}',
-        headers={'token': token},
-        json=req
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    del req['name']
     req['passwd'] = 'abcdefsfd'
     res = api.patch(
         f'/api/users/{client_info1["id"]}',
@@ -192,3 +183,19 @@ def test_change_success(api: TestCase):
     user_data: User = UserCRUDManager().read(user_email=client_info1['email'])
     assert user_data.name == req['name']
     assert user_data.passwd == req['passwd']
+
+
+def test_change_only_name(api: TestCase):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    
+    req = {
+        'name': 'changed2',
+    }
+    res = api.patch(
+        f'/api/users/{client_info1["id"]}',
+        json=req, headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    user_data: User = UserCRUDManager().read(user_email=client_info1['email'])
+    assert user_data.name == req['name']

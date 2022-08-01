@@ -24,6 +24,8 @@ def _validate_storage_size(cls, storage_size: int):
 
 def _validate_passwd(cls, passwd: str):
     # 8자 이상
+    if passwd == '':
+        return ''
     if not (8 <= len(passwd) <= 32):
         raise ValueError('패스워드가 맞지 않습니다.')
     return passwd
@@ -59,7 +61,7 @@ class UserUpdate(UserBase):
     passwd: str
 
     @validator('passwd')
-    def validate_passwd(cls, passwd: str):
+    def validate_passwd(cls, passwd: str = None):
         return _validate_passwd(cls, passwd)
 
 class UserRead(UserBase):

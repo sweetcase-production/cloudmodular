@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status, Response
 import pydantic
 import json
 
@@ -213,6 +213,8 @@ class UserView:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
+        else:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 class UserSearchView:

@@ -60,7 +60,8 @@ class UserDBQueryUpdator(QueryUpdator):
             raise UserNotFound()
         # 데이터 변경 시도
         user.name = update_format.name
-        user.passwd = update_format.passwd
+        if update_format.passwd != '':
+            user.passwd = update_format.passwd
         # 커밋
         try:
             session.commit()

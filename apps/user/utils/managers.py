@@ -48,7 +48,7 @@ class UserCRUDManager(CRUDManager):
         self,
         user_id: int,
         name: str,
-        passwd: str
+        passwd: str = None,
     ) -> User:
         # Make Schema
         update_schema = UserUpdate(
@@ -148,7 +148,7 @@ class UserManager(FrontendManager):
             raise UserNotFound()
         return user
 
-    def update_user(self, token: str, pk: int, name: str, passwd: str) -> User:
+    def update_user(self, token: str, pk: int, name: str, passwd: str = '') -> User:
         try:
             # token에서 해당 유저 정보를 추출
             decoded_token = LoginTokenGenerator().decode(token)
