@@ -44,6 +44,6 @@ jobs:
       run: |
         pytest --cov -ssv
     - name: upload codecov
-      - uses: codecov/codecov-action@v3
-        with:
-          verbose: true
+      uses: codecov/codecov-action@v3
+      with:
+        verbose: true
