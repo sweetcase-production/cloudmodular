@@ -21,7 +21,6 @@ incremental==21.3.0
 iniconfig==1.1.1
 mysqlclient==2.1.0
 packaging==21.3
-pkg_resources==0.0.0
 pluggy==1.0.0
 py==1.11.0
 pydantic==1.9.1
