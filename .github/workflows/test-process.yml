@@ -42,4 +42,5 @@ jobs:
         mkdir test_storage
     - name: test
       run: |
-        coverage run -m pytest
+        pytest --cov -ssv
+        codecov
