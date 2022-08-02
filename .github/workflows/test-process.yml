@@ -40,7 +40,6 @@ jobs:
     - name: Pre-Processing
       run: |
         mkdir test_storage
-        python main.py --method=migrate --type=dev
     - name: test
       run: |
         coverage run -m pytest
