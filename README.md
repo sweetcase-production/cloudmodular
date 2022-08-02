@@ -1,4 +1,7 @@
 # CloudModular [Server]
+<p align="center">
+    <img width="70%" src="https://raw.githubusercontent.com/SweetCase-Cobalto/cloudmodular/main/readme-asset/title.png?token=GHSAT0AAAAAABUZRX43MQBPTOW7QM2WY5DWYVHIGLA">
+</p>
 
 <div align="center">
     <img src="https://img.shields.io/badge/fastapi-109989?style=flat-square&logo=FASTAPI&logoColor=white" />
@@ -12,9 +15,11 @@
     <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white">
 </div>
 
-<p align="center">
-    <img width="70%" src="https://raw.githubusercontent.com/SweetCase-Cobalto/cloudmodular/main/readme-asset/title.png?token=GHSAT0AAAAAABUZRX43MQBPTOW7QM2WY5DWYVHIGLA">
-</p>
+<div align="center">
+<a href="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular" > 
+ <img src="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular/branch/main/graph/badge.svg?token=D7L8SNPUKF"/> 
+ </a>
+</div>
 
 The Constructive Cloud Service for your NAS Server
 
