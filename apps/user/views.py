@@ -70,9 +70,10 @@ class UserView:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='권한이 없습니다.')
         except pydantic.ValidationError as e:
+            msg = str(e.args[0][0].exc)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e))
+                detail=msg)
         except UserAlreadyExists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -171,9 +172,10 @@ class UserView:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='없는 사용자 입니다.')
         except pydantic.ValidationError as e:
+            msg = str(e.args[0][0].exc)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e))
+                detail=msg)
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

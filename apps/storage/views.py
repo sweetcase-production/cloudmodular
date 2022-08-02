@@ -94,9 +94,10 @@ class StorageView:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='접근 권한이 없습니다.')
         except pydantic.ValidationError as e:
+            msg = str(e.args[0][0].exc)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e))
+                detail=msg)
         except UserNotFound:
             """
             Admin이 Client에 데이터를 추가할 때
@@ -224,9 +225,10 @@ class StorageView:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='접근 권한이 없습니다.')
         except pydantic.ValidationError as e:
+            msg = str(e.args[0][0].exc)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e))
+                detail=msg)
         except UserNotFound:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

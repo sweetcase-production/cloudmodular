@@ -14,7 +14,7 @@ class DataInfoBase(BaseModel):
     @validator('name')
     def validate_name(cls, name: str):
         if not DataInfoBase._check_filename(name):
-            raise ValueError('name validate failed')
+            raise ValueError('파일 또는 폴더 이름이 유효하지 않습니다.')
         return name
 
     @validator('root')
@@ -25,7 +25,7 @@ class DataInfoBase(BaseModel):
         units = root.split('/')
         for unit in units:
             if not DataInfoBase._check_filename(unit):
-                raise ValueError('root validate failed')
+                raise ValueError('폴더 이름이 유효하지 않습니다.')
         return root
 
 
