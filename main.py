@@ -59,9 +59,9 @@ if __name__ == '__main__':
         # Cors 설정
         origins = list()
         if args.type == 'dev':
-            origins.append("http://localhost:3000")
+            origins.append("*")
         elif args.type == 'prod':
-            origins.append(f"http://localhost:{SERVER['port']}")
+            origins.append(f"*:{SERVER['port']}")
         app.add_middleware(
             CORSMiddleware,
             allow_origins=origins,
@@ -69,7 +69,6 @@ if __name__ == '__main__':
             allow_methods=['*'],
             allow_headers=['token'],
         )
-        # App 실행
         uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
     elif args.method == 'migrate':
         # Database, Storage Migration
