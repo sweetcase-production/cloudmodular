@@ -1,0 +1,46 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: localhost
+      SERVER_PORT: 8000
+      SERVER_STORAGE: test_storage
+      DB_TYPE: sqlite
+      ADMIN_EMAIL: example@gmail.com
+      ADMIN_PASSWD: 1234567890
+      ADMIN_EMAIL_PASSWD: abcdefsdfgs
+      JWT_KEY: Example
+      JWT_ALGORITHM: HS256
+      DATA_SHARED_LENGTH: 7
+      
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install requirements.txt
+    - name: Pre-Processing
+      run: |
+        mkdir test_storage
+        python main.py --method=migrate --type=dev
+    - name: test
+      run: |
+        coverage run -m pytest
