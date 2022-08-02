@@ -3,8 +3,12 @@ load_dotenv()
 
 from system.connection.generators import DatabaseGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+
 import uvicorn
 import argparse
 
@@ -61,7 +65,31 @@ if __name__ == '__main__':
         if args.type == 'dev':
             origins.append("*")
         elif args.type == 'prod':
-            origins.append(f"*:{SERVER['port']}")
+            origins.append("*")
+            
+            # Prod인 경우 staticweb까지 추가
+            templates = Jinja2Templates(directory='web')
+            app.mount('/static', StaticFiles(directory='web/static'), name='static')
+            # api 추가
+            @app.get('/')
+            async def index(request: Request):
+                return templates.TemplateResponse('index.html', {"request": request})
+            @app.get('/login')
+            async def index(request: Request):
+                return templates.TemplateResponse('index.html', {"request": request})
+            @app.get('/storage')
+            async def index(request: Request):
+                return templates.TemplateResponse('index.html', {"request": request})
+            @app.get('/setting')
+            async def index(request: Request):
+                return templates.TemplateResponse('index.html', {"request": request})
+            @app.get('/error')
+            async def index(request: Request):
+                return templates.TemplateResponse('index.html', {"request": request})
+            @app.get('/accounts')
+            async def index(request: Request):
+                return templates.TemplateResponse('index.html', {"request": request})
+
         app.add_middleware(
             CORSMiddleware,
             allow_origins=origins,
@@ -70,6 +98,7 @@ if __name__ == '__main__':
             allow_headers=['token'],
         )
         uvicorn.run(app, host='0.0.0.0', port=SERVER['port'])
+
     elif args.method == 'migrate':
         # Database, Storage Migration
         if args.type == 'dev':
