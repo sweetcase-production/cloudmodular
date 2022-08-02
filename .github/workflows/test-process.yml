@@ -29,9 +29,6 @@ jobs:
       
     steps:
     - uses: actions/checkout@v3
-    - uses: codecov/codecov-action@v3
-      with:
-        verbose: true
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -46,3 +43,7 @@ jobs:
     - name: test
       run: |
         pytest --cov -ssv
+    - name: upload codecov
+      - uses: codecov/codecov-action@v3
+        with:
+          verbose: true
