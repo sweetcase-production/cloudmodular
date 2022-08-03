@@ -1,3 +1,4 @@
+from typing import Optional
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -70,23 +71,13 @@ if __name__ == '__main__':
             # Prod인 경우 staticweb까지 추가
             templates = Jinja2Templates(directory='web')
             app.mount('/static', StaticFiles(directory='web/static'), name='static')
-            # api 추가
+            # static webURL 추가
             @app.get('/')
-            async def index(request: Request):
-                return templates.TemplateResponse('index.html', {"request": request})
-            @app.get('/login')
-            async def index(request: Request):
-                return templates.TemplateResponse('index.html', {"request": request})
-            @app.get('/storage')
-            async def index(request: Request):
-                return templates.TemplateResponse('index.html', {"request": request})
-            @app.get('/setting')
-            async def index(request: Request):
-                return templates.TemplateResponse('index.html', {"request": request})
-            @app.get('/error')
-            async def index(request: Request):
-                return templates.TemplateResponse('index.html', {"request": request})
-            @app.get('/accounts')
+            @app.get('/login/{path:path}')
+            @app.get('/storage/{path:path}')
+            @app.get('/setting/{path:path}')
+            @app.get('/error/{path:path}')
+            @app.get('/accounts/{path:path}')
             async def index(request: Request):
                 return templates.TemplateResponse('index.html', {"request": request})
 
