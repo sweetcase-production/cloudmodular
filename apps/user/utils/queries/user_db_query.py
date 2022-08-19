@@ -3,6 +3,7 @@ from typing import List, Optional
 from apps.data_tag.models import DataTag
 from apps.storage.models import DataInfo
 from apps.tag.models import Tag
+import bcrypt
 
 from apps.user.models import User
 from apps.user.schemas import UserCreate, UserUpdate
@@ -34,8 +35,17 @@ class UserDBQueryCreator(QueryCreator):
             # admin은 단 하나만 생성할 수 있다.
             raise PermissionError()
         try:
+            # DB 저장
+
+            # Serializer -> Dict
+            request = user_format.dict()
+            # 패스워드 암호화
+            request['passwd'] = \
+                bcrypt.hashpw(
+                    request['passwd'].encode('utf-8'),
+                    bcrypt.gensalt())
             # DB 업로드
-            user: User = User(**(user_format.dict()))
+            user: User = User(**request)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -61,7 +71,10 @@ class UserDBQueryUpdator(QueryUpdator):
         # 데이터 변경 시도
         user.name = update_format.name
         if update_format.passwd != '':
-            user.passwd = update_format.passwd
+            # 암호화 해서 저장
+            user.passwd = bcrypt.hashpw(
+                update_format.passwd.encode('utf-8'),
+                bcrypt.gensalt())
         # 커밋
         try:
             session.commit()
