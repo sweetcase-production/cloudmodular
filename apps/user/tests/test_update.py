@@ -2,6 +2,7 @@ from unittest import TestCase
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+import bcrypt
 
 from main import app
 from system.bootloader import Bootloader
@@ -182,8 +183,8 @@ def test_change_success(api: TestCase):
     # 변경된 정보 확인
     user_data: User = UserCRUDManager().read(user_email=client_info1['email'])
     assert user_data.name == req['name']
-    assert user_data.passwd == req['passwd']
-    client_info1['passwd'] = user_data.passwd
+    assert bcrypt.checkpw(req['passwd'].encode('utf-8'), user_data.passwd)
+    client_info1['passwd'] = req['passwd']
 
 
 def test_change_only_name_and_client_mine(api: TestCase):

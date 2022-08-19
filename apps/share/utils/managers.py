@@ -161,8 +161,13 @@ class DataSharedManager(FrontendManager):
 
         # Admin 권한으로 다운받는다.
         admin_user = UserDBQuery().read(is_admin=True)
+        """
+        Admin 패스워드 상태는 bcrypt로 hashing된 상태이므로
+        패스워드 비교시 추가 해싱 필요 X
+        """
         admin_token = AppAuthManager() \
-            .login(admin_user.email, admin_user.passwd)
+            .login(admin_user.email, admin_user.passwd, hashing=False)
+        # 실제 다운로드 루트 구하기
         download_root = \
             DataManager().read(admin_token, data_info.user_id, shared.datainfo_id, 'download')
         return download_root['file'], data_info.is_dir
