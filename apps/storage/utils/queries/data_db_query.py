@@ -218,7 +218,7 @@ class DataDBQuery(QueryCRUD):
         finally:
             session.close()
 
-    def sync_file_size(self, data_id: int, full_root: str):
+    def sync_file_size(self, data_id: int, full_root: str) -> DataInfo:
         # 해당 데이터와 실제 데이터의 크기를 동기화
         session = DatabaseGenerator.get_session()
         q = session.query(DataInfo)
@@ -228,13 +228,15 @@ class DataDBQuery(QueryCRUD):
         try:
             # 비교 후 수정
             real_size, db_size = os.path.getsize(full_root), data_info.size
-            if real_size == db_size:
+            if real_size != db_size:
                 data_info.size = real_size
                 session.commit()
                 session.refresh(data_info)
         except Exception as e:
             session.rollback()
             raise e
+        else:
+            return data_info
         finally:
             session.close()
 

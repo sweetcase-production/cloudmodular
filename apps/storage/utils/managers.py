@@ -393,7 +393,7 @@ class DataManager(FrontendManager):
         if not data_info.is_dir:
             # 읽기 대상 데이터가 파일인 경우
             # 파일 크기에 대한 동기화를 진행한다.
-            DataDBQuery().sync_file_size(
+            data_info = DataDBQuery().sync_file_size(
                 data_id=data_id, full_root=raw_root)
 
         # 리턴 데이터

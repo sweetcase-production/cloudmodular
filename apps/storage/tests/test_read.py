@@ -212,10 +212,12 @@ def test_size_changed_illeagal_in_db(api: TestClient):
     DB의 어느 레코드의 size값이 불법적인 루트에 의해 변경되었다.
     이런 상태에서도 해당 파일의 size값은 항상 올바르게 나와야 한다.
     """
+
+    target_id = treedir["mydir"]["hi.txt"]["id"]
     # 값 변경
     session = DatabaseGenerator.get_session()
     data: DataInfo = session.query(DataInfo) \
-        .filter(DataInfo.id == treedir['mydir']['id']).scalar()
+        .filter(DataInfo.id == target_id).scalar()
     data.size = 9999
     session.commit()
     session.close()
@@ -224,17 +226,17 @@ def test_size_changed_illeagal_in_db(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(
-        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
+        f'/api/users/{client_info["id"]}/datas/{target_id}',
         headers={'token': token},
         params={'method': 'info'}
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
         'created': res.json()['created'],
-        'root': '/',
-        'is_dir': True,
-        'name': 'mydir',
-        'size': 3,
+        'root': '/mydir/',
+        'is_dir': False,
+        'name': 'hi.txt',
+        'size': 12,
     }
 
 def test_download_file(api: TestClient):
