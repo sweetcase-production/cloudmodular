@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 
 from apps.storage.schemas import DataInfoRead
 from apps.storage.utils.managers import DataManager
-from core.exc import DataAlreadyExists, DataNotFound, UserNotFound
+from core.exc import DataAlreadyExists, DataNotFound, UsageLimited, UserNotFound
 from core.background_tasks import background_remove_file
 
 storage_router = APIRouter(
@@ -89,6 +89,10 @@ class StorageView:
                 token, user_id,
                 data_id, files, dirname
             )
+        except UsageLimited:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail='제한 용량을 초과했습니다.')
         except PermissionError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

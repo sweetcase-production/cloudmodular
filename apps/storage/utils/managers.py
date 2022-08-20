@@ -15,6 +15,7 @@ from architecture.manager.backend_manager import CRUDManager
 from core.exc import (
     DataAlreadyExists,
     DataNotFound,
+    UsageLimited,
     UserNotFound
 )
 from core.token_generators import (
@@ -97,7 +98,13 @@ class DataFileCRUDManager(CRUDManager):
             try:
                 data_size = \
                     DataStorageQuery() \
-                        .create(root=file_root, is_dir=False, file=file)
+                        .create(
+                            root=file_root,
+                            is_dir=False, file=file,
+                            user_id=user_id)
+            except UsageLimited as e:
+                # 용량 초과는 지속하지 않고 raise처리한다.
+                raise e
             except Exception:
                 # 실패시 다음 파일로 넘김
                 continue
@@ -463,7 +470,6 @@ class DataManager(FrontendManager):
             }
 
     def destroy(self, token: str, user_id: int, data_id: int):
-
         # email에 대한 요청 사용자 구하기
         op_email, issue = decode_token(token, LoginTokenGenerator)
         operator: Optional[User] = \

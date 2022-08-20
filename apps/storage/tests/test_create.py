@@ -10,10 +10,13 @@ from apps.auth.utils.managers import AppAuthManager
 from apps.user.utils.managers import UserCRUDManager
 from settings.base import SERVER
 
+from apps.storage.models import DataInfo
+from system.connection.generators import DatabaseGenerator
+
 
 admin_info = None
 client_info = None
-f1, f2 = None, None
+f1, f2, f3 = None, None, None
 created_dirs = dict()
 
 f1_id = None
@@ -24,8 +27,7 @@ TEST_EXAMLE_ROOT = 'apps/storage/tests/example'
 def api():
     global admin_info
     global client_info
-    global f1
-    global f2
+    global f1, f2, f3
     # Load Application
     Bootloader.migrate_database()
     Bootloader.init_storage()
@@ -44,13 +46,14 @@ def api():
         'email': 'seokbong61@gmail.com',
         'name': 'jeonghyun2',
         'passwd': 'passwd0123',
-        'storage_size': 10,
+        'storage_size': 1,
     }
     user = UserCRUDManager().create(**client_info)
     client_info['id'] = user.id
     # Open files for testing
     f1 = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
     f2 = open(f'{TEST_EXAMLE_ROOT}/hi2.txt', 'rb')
+    f3 = open(f'{TEST_EXAMLE_ROOT}/second2.txt', 'rb')
     # Return test api
     yield TestClient(app)
     # Close all files
@@ -62,11 +65,13 @@ def api():
 
 
 def reload_file():
-    global f1, f2
+    global f1, f2, f3
     f1.close()
     f2.close()
+    f3.close()
     f1 = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
     f2 = open(f'{TEST_EXAMLE_ROOT}/hi2.txt', 'rb')
+    f3 = open(f'{TEST_EXAMLE_ROOT}/second2.txt', 'rb')
 
 # TESTING COMMON
 def test_no_token(api: TestClient):
@@ -424,3 +429,27 @@ def test_try_create_on_file(api: TestClient):
         files = [('files', (f1.name, f1))]
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
+
+def test_usage_limited(api: TestClient):
+    # 용량 초과
+    # DB상 파일 데이터 크기 임의 변경
+    session = DatabaseGenerator().get_session()
+    target: DataInfo = \
+        session.query(DataInfo) \
+            .filter(DataInfo.id == f1_id).scalar()
+    target.size = 10 * (10 ** 9)    # 10GB
+    session.commit()
+    
+    # 테스트
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    reload_file()
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/0',
+        headers={'token': token},
+        files = [('files', (f3.name, f3))]
+    )
+    assert res.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
+
+
