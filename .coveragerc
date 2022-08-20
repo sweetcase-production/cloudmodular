@@ -1,6 +1,8 @@
 [run]
-omit=*/tests/*, */__init__.py, main.py
+omit=*/tests/*, */__init__.py, main.py, system/*, settings/*, architecture/system/connection.py
 
 [report]
 exclude_lines=
     except Exception
+    raise NotImplemented()
+    raise NotImplementedError()

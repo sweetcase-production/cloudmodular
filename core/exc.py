@@ -10,6 +10,10 @@ class UserAlreadyExists(Exception):
     def __init__(self):
         super().__init__("User Already Exists")
 
+class UsageLimited(Exception):
+    def __init__(self):
+        super().__init__("storage size limited")
+
 class DataAlreadyExists(Exception):
     def __init__(self):
         super().__init__("Data Already Exists")

@@ -183,7 +183,10 @@ def test_change_success(api: TestCase):
     # 변경된 정보 확인
     user_data: User = UserCRUDManager().read(user_email=client_info1['email'])
     assert user_data.name == req['name']
-    assert bcrypt.checkpw(req['passwd'].encode('utf-8'), user_data.passwd)
+    user_data_pswd = user_data.passwd
+    if isinstance(user_data_pswd, str):
+        user_data_pswd = user_data_pswd.encode('utf-8')
+    assert bcrypt.checkpw(req['passwd'].encode('utf-8'), user_data_pswd)
     client_info1['passwd'] = req['passwd']
 
 

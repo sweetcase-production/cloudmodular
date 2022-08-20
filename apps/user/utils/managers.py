@@ -225,3 +225,25 @@ class UserManager(FrontendManager):
             raise ValueError('파라미터의 자료형이 맞지 않습니다.')
         # 검색
         return UserCRUDManager().search(page=page, page_size=page_size)
+
+
+    def get_user_usage(self, token: str, user_id: int):
+        try:
+            # token에서 해당 유저 정보를 추출
+            decoded_token = LoginTokenGenerator().decode(token)
+            op_email = decoded_token['email']
+            issue = decoded_token['iss']
+        except Exception:
+            raise PermissionError()
+        # Email에 대한 유저가 존재하지 않으면 Permisson Failed
+        operator: User = UserCRUDManager().read(user_email=op_email)
+        if not operator:
+            raise PermissionError()
+        # Permission Check
+        # Admin이거나, client and 자기 자신이어야 한다
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | 
+                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, user_id)))):
+            raise PermissionError()
+        return UserDBQuery().read_usage(user_id)

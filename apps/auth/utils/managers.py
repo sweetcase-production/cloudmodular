@@ -21,12 +21,21 @@ class AppAuthManager(FrontendManager):
         if not user:
             # 사용자 없음
             raise ValueError('해당 사용자는 존재하지 않습니다.')
+        user_passwd = user.passwd
+
+        # 문자열이면 utf-8로 인코딩한다.
+        if isinstance(passwd, str):
+            passwd = passwd.encode('utf-8')
+        if isinstance(user_passwd, str):
+            user_passwd = user_passwd.encode('utf-8')
+        
         # 패스워드 검토
         passwd_valid: bool = \
-            bcrypt.checkpw(passwd.encode('utf-8'), user.passwd) if hashing \
-            else passwd == user.passwd
+            bcrypt.checkpw(passwd, user_passwd) if hashing \
+            else passwd == user_passwd
         if not passwd_valid:
             # 패스워드 틀림
             raise ValueError('패스워드가 정확하지 않습니다.')
+        
         # 발급
         return LoginAuthManager().generate_token(req={'email': email})

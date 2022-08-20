@@ -1,8 +1,9 @@
 import os
 import shutil
-
 from typing import Dict, List, Optional
 from fastapi import UploadFile
+from apps.user.utils.queries.user_db_query import UserDBQuery
+
 from architecture.query.crud import (
     QueryCRUD, 
     QueryCreator, 
@@ -10,6 +11,7 @@ from architecture.query.crud import (
     QueryReader,
     QueryUpdator
 )
+from core.exc import UsageLimited
 
 
 class DataStorageQueryCreator(QueryCreator):
@@ -18,17 +20,21 @@ class DataStorageQueryCreator(QueryCreator):
         root: str, 
         is_dir: bool,
         rewrite: bool = False,
-        file: Optional[UploadFile] = None
-    ):
+        file: Optional[UploadFile] = None,
+        user_id: Optional[int] = None,
+    ) -> int:
         """
         파일 또는 디렉토리 생성
         이미 존재하는 경우 AsertionError 호출
+
+        :return: 데이터 길이 (디렉토리는 파일 0개이므로 0, 파일은 파일 크기)
         """
         if is_dir:
             # 디렉토리 생성
             # rewrite 여부 상관 없이 덮어쓰기 불가능
             assert os.path.isdir(root) is False
             os.mkdir(root)
+            return 0
         else:
             # 파일 생성
             if rewrite:
@@ -36,9 +42,23 @@ class DataStorageQueryCreator(QueryCreator):
                 assert os.path.isfile(root) is False
             
             segment_size = 1000 # 1000바이트씩 끊어서
+            data_len = 0 # 데이터 길이
             with open(root, 'wb') as f:
                 while s := file.file.read(segment_size):
                     f.write(s)
+                    data_len += len(s)
+            # 데이터 크기 비교
+            try:
+                usage_data = UserDBQuery().read_usage(user_id)
+                entire, used = usage_data['entire'], usage_data['used']
+                if used + data_len > entire:
+                    # 메모리 초과, 데이터 삭제 후 Exception
+                    os.remove(root)
+                    raise UsageLimited()
+            except Exception as e:
+                raise e
+            else:
+                return data_len
 
 class DataStorageQueryReader(QueryReader):
     def __call__(self, root: str, is_dir: bool) -> Optional[Dict]:
