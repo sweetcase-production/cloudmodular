@@ -50,14 +50,45 @@ def test_no_token(api: TestClient):
 def test_uo_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
-
     res = api.get(f'/api/users/0', headers={'token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_success(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    
     res = api.get(f'/api/users/{admin_info["id"]}', headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
 
+def test_usage_but_no_token(api: TestClient):
+    res = api.get(f'/api/users/{admin_info["id"]}/usage')
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_usage_but_no_user(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(f'/api/users/0/usage', headers={'token': token})
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+def test_usage_permission_failed(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(f'/api/users/{admin_info["id"]}/usage', headers={'token': token})
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_usage_success(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(f'/api/users/{client_info["id"]}/usage', headers={'token': token})
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == {
+        'entire': 10 * (10 ** 9),
+        'used': 0
+    }
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(f'/api/users/{client_info["id"]}/usage', headers={'token': token})
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == {
+        'entire': 10 * (10 ** 9),
+        'used': 0
+    }

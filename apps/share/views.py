@@ -187,6 +187,8 @@ class DataSharedDataDownloadView:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='공유가 되어 있지 않거나 만료되었습니다.')
         except Exception:
+            import traceback
+            traceback.print_exc()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')

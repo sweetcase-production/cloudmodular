@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import Dict, List, Optional
 from fastapi import UploadFile
-from sqlalchemy.sql import func
+from apps.user.utils.queries.user_db_query import UserDBQuery
 
 from architecture.query.crud import (
     QueryCRUD, 
@@ -11,10 +11,7 @@ from architecture.query.crud import (
     QueryReader,
     QueryUpdator
 )
-from apps.storage.models import DataInfo
-from apps.user.models import User
 from core.exc import UsageLimited
-from system.connection.generators import DatabaseGenerator
 
 
 class DataStorageQueryCreator(QueryCreator):
@@ -50,31 +47,18 @@ class DataStorageQueryCreator(QueryCreator):
                 while s := file.file.read(segment_size):
                     f.write(s)
                     data_len += len(s)
-
             # 데이터 크기 비교
-            
             try:
-                session = DatabaseGenerator.get_session()
-                entire = session.query(User) \
-                    .filter(User.id == user_id) \
-                    .scalar().storage_size * (10**9)    # GB단위이므로 바이트단위로 바꾼다.
-                used = session.query(func.sum(DataInfo.size)) \
-                    .filter(DataInfo.user_id == user_id) \
-                    .group_by(DataInfo.user_id).scalar()
+                usage_data = UserDBQuery().read_usage(user_id)
+                entire, used = usage_data['entire'], usage_data['used']
                 if used + data_len > entire:
                     # 메모리 초과, 데이터 삭제 후 Exception
                     os.remove(root)
-                    print('removed')
                     raise UsageLimited()
             except Exception as e:
                 raise e
             else:
                 return data_len
-            finally:
-                session.close()
-
-
-            return data_len
 
 class DataStorageQueryReader(QueryReader):
     def __call__(self, root: str, is_dir: bool) -> Optional[Dict]:

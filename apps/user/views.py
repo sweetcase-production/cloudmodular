@@ -218,6 +218,46 @@ class UserView:
         else:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+class UserUsageView:
+    """
+    유저 사용 용량 관련 View
+
+    (GET)       /api/users/{id}/usage   사용한 용량, 전체용량 가져오기
+    (PATCH)     /api/users/{id}/usage   해당 유저에 대한 DB와 실제 스토리지 동기화
+    """
+
+    @staticmethod
+    @user_router.get(
+        path='/{pk}/usage',
+        status_code=status.HTTP_200_OK)
+    def get_user_usage(request: Request, pk: int):
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        try:
+            res = UserManager().get_user_usage(token=token, user_id=pk)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='권한이 없습니다.')
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='검색 대상의 사용자가 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            return res
 
 class UserSearchView:
     """

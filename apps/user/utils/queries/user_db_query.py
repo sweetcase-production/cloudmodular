@@ -1,11 +1,12 @@
 from sqlalchemy import and_, or_
-from typing import List, Optional
-from apps.data_tag.models import DataTag
-from apps.storage.models import DataInfo
-from apps.tag.models import Tag
+from sqlalchemy.sql import func
+from typing import Dict, List, Optional
 import bcrypt
 
 from apps.user.models import User
+from apps.data_tag.models import DataTag
+from apps.storage.models import DataInfo
+from apps.tag.models import Tag
 from apps.user.schemas import UserCreate, UserUpdate
 from architecture.query.crud import (
     QueryCRUD, 
@@ -183,3 +184,22 @@ class UserDBQuery(QueryCRUD):
     destroyer = UserDBQueryDestroyer
     updator = UserDBQueryUpdator
     searcher = UserDBQuerySearcher
+
+    def read_usage(self, user_id: int) -> Dict[str, int]:
+        # 사용량 구하기
+        session = DatabaseGenerator.get_session()
+        # Check User Data
+        user: User = \
+            session.query(User) \
+                .filter(User.id == user_id).scalar()
+        if not user:
+            raise UserNotFound()
+        entire = user.storage_size * (10 ** 9) # GB -> Byte
+        # Check Usage size
+        used = session.query(func.sum(DataInfo.size)) \
+            .filter(DataInfo.user_id == user_id) \
+            .group_by(DataInfo.user_id).scalar()
+        return {
+            'entire': entire,
+            'used': used if used else 0
+        }
