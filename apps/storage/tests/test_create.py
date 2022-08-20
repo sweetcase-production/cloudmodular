@@ -60,6 +60,14 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
+
+def reload_file():
+    global f1, f2
+    f1.close()
+    f2.close()
+    f1 = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
+    f2 = open(f'{TEST_EXAMLE_ROOT}/hi2.txt', 'rb')
+
 # TESTING COMMON
 def test_no_token(api: TestClient):
     res = api.post(
@@ -95,6 +103,7 @@ def test_admin_try_to_upload_no_user(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     # File
+    reload_file()
     res = api.post(
         f'/api/users/99999999999/datas/0',
         headers={'token': token},
@@ -118,6 +127,7 @@ def test_fileupload_in_no_exists_root(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     
     # File
+    reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/999999999999999999',
         headers={'token': token},
@@ -236,6 +246,7 @@ def test_success_directory(api: TestClient):
         'id': main_mydir['id'],
         'root': '/',
         'name': 'mydir',
+        'size': 0,
         'created': main_mydir['created'],
     }
     # 제대로 디렉토리가 생성되어 있는 지 확인
@@ -256,6 +267,7 @@ def test_success_directory(api: TestClient):
         'id': sub_subdir['id'],
         'root': '/mydir/',
         'name': 'subdir',
+        'size': 0,
         'created': sub_subdir['created']
     }
     # 제대로 생성되어 있는 지 확인
@@ -286,6 +298,7 @@ def admin_can_create_to_other_storage(api: TestClient):
         'id': sub_mydir['id'],
         'root': '/mydir/',
         'name': 'mydir',
+        'size': 0,
         'created': sub_mydir['created']
     }
     # 제대로 생성되어 있는 지 확인
@@ -309,6 +322,7 @@ def test_file_upload(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     # 메인 디렉토리 파일 업로드
+    reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
@@ -325,6 +339,7 @@ def test_file_upload(api: TestClient):
             'id': output[0]['id'],
             'root': '/',
             'name': 'hi.txt',
+            'size': 12,
             'created': output[0]['created']
         },
         {
@@ -332,6 +347,7 @@ def test_file_upload(api: TestClient):
             'id': output[1]['id'],
             'root': '/',
             'name': 'hi2.txt',
+            'size': 6,
             'created': output[1]['created']
         }
     ]
@@ -339,6 +355,7 @@ def test_file_upload(api: TestClient):
     # 서브 디렉토리 파일 업로드 + 관리자가 특정 클라이언트의 스토리지에 업로드 가능
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
+    reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/{created_dirs["mydir"]["id"]}',
         headers={'token': token},
@@ -355,6 +372,7 @@ def test_file_upload(api: TestClient):
             'id': output[0]['id'],
             'root': '/mydir/',
             'name': 'hi.txt',
+            'size': 12,
             'created': output[0]['created']
         },
         {
@@ -362,6 +380,7 @@ def test_file_upload(api: TestClient):
             'id': output[1]['id'],
             'root': '/mydir/',
             'name': 'hi2.txt',
+            'size': 6,
             'created': output[1]['created']
         }
     ]
@@ -378,6 +397,7 @@ def test_rewrite_file(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     # 메인 디렉토리 파일 업로드
+    reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
@@ -397,6 +417,7 @@ def test_try_create_on_file(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
 
+    reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/{f1_id}',
         headers={'token': token},

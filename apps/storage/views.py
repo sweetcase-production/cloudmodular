@@ -114,7 +114,9 @@ class StorageView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='해당 디렉토리가 이미 존재합니다.')
-        except Exception:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')

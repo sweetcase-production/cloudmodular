@@ -11,6 +11,9 @@ from apps.storage.utils.managers import (
 )
 from system.bootloader import Bootloader
 
+from apps.storage.models import DataInfo
+from system.connection.generators import DatabaseGenerator
+
 
 client_info, admin_info, other_info = None, None, None
 other_info = None
@@ -188,6 +191,36 @@ def test_search_directory(api: TestClient):
     }
 
 def test_admin_can_search_client_repo(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
+        headers={'token': token},
+        params={'method': 'info'}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == {
+        'created': res.json()['created'],
+        'root': '/',
+        'is_dir': True,
+        'name': 'mydir',
+        'size': 3,
+    }
+
+def test_size_changed_illeagal_in_db(api: TestClient):
+    """
+    DB의 어느 레코드의 size값이 불법적인 루트에 의해 변경되었다.
+    이런 상태에서도 해당 파일의 size값은 항상 올바르게 나와야 한다.
+    """
+    # 값 변경
+    session = DatabaseGenerator.get_session()
+    data: DataInfo = session.query(DataInfo) \
+        .filter(DataInfo.id == treedir['mydir']['id']).scalar()
+    data.size = 9999
+    session.commit()
+    session.close()
+
+    # 테스트
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.get(

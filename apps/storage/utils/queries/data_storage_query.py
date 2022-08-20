@@ -19,16 +19,19 @@ class DataStorageQueryCreator(QueryCreator):
         is_dir: bool,
         rewrite: bool = False,
         file: Optional[UploadFile] = None
-    ):
+    ) -> int:
         """
         파일 또는 디렉토리 생성
         이미 존재하는 경우 AsertionError 호출
+
+        :return: 데이터 길이 (디렉토리는 파일 0개이므로 0, 파일은 파일 크기)
         """
         if is_dir:
             # 디렉토리 생성
             # rewrite 여부 상관 없이 덮어쓰기 불가능
             assert os.path.isdir(root) is False
             os.mkdir(root)
+            return 0
         else:
             # 파일 생성
             if rewrite:
@@ -36,9 +39,12 @@ class DataStorageQueryCreator(QueryCreator):
                 assert os.path.isfile(root) is False
             
             segment_size = 1000 # 1000바이트씩 끊어서
+            data_len = 0 # 데이터 길이
             with open(root, 'wb') as f:
                 while s := file.file.read(segment_size):
                     f.write(s)
+                    data_len += len(s)
+            return data_len
 
 class DataStorageQueryReader(QueryReader):
     def __call__(self, root: str, is_dir: bool) -> Optional[Dict]:

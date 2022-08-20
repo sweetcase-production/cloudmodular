@@ -1,5 +1,6 @@
 from sqlalchemy import and_, Sequence, func
 from typing import Optional
+import os
 
 from apps.storage.models import DataInfo
 from apps.data_tag.models import DataTag
@@ -26,6 +27,7 @@ class DataDBQueryCreator(QueryCreator):
             root=data_format.root,
             user_id=data_format.user_id,
             is_dir=data_format.is_dir,
+            size=data_format.size,
         )
         # user_id & name & root & is_dir일 경우 생성 불가능
         if q.filter(and_(
@@ -117,7 +119,7 @@ class DataDBQueryReader(QueryReader):
                 query = q.filter(DataInfo.id == data_id)
                 if user_id:
                     query.filter(DataInfo.user_id == user_id)
-                data = query.scalar()
+                data: DataInfo = query.scalar()
 
             elif full_root:
                 # search by full_root
@@ -171,7 +173,8 @@ class DataDBQueryUpdator(QueryUpdator):
                     DataInfo.user_id == user_id,
                     DataInfo.root.startswith(dst_root),
                 )).update({
-                    DataInfo.root: func.replace(DataInfo.root, dst_root, src_root)
+                    DataInfo.root: func.replace(
+                        DataInfo.root, dst_root, src_root)
                 }, synchronize_session=False)
             session.commit()
             session.refresh(data_info)
@@ -188,3 +191,50 @@ class DataDBQuery(QueryCRUD):
     destroyer = DataDBQueryDestroyer
     reader = DataDBQueryReader
     updator = DataDBQueryUpdator
+
+    def update_file_automatic(
+        self, 
+        data_id: int, 
+        data_format: DataInfoCreate
+    ) -> DataInfo:
+        # 데이터를 생성할 때, 같은 이름의 파일을 자동 갱신할 때 사용한다.
+        session = DatabaseGenerator.get_session()
+        q = session.query(DataInfo)
+        # 같은 유저 + 같은 이름 + 같은 루트
+        data_info: DataInfo = q.filter(DataInfo.id == data_id).scalar()
+        if not data_info:
+            raise DataNotFound()
+        try:
+            # 데이터 수정
+            # 싸이즈만 변경하면 된다.
+            data_info.size = data_format.size
+            session.commit()
+            session.refresh(data_format)
+        except Exception as e:
+            session.rollback()
+            raise e
+        else:
+            return data_info
+        finally:
+            session.close()
+
+    def sync_file_size(self, data_id: int, full_root: str):
+        # 해당 데이터와 실제 데이터의 크기를 동기화
+        session = DatabaseGenerator.get_session()
+        q = session.query(DataInfo)
+        data_info: DataInfo = q.filter(DataInfo.id == data_id).scalar()
+        if not data_info:
+            raise DataNotFound()
+        try:
+            # 비교 후 수정
+            real_size, db_size = os.path.getsize(full_root), data_info.size
+            if real_size == db_size:
+                data_info.size = real_size
+                session.commit()
+                session.refresh(data_info)
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+

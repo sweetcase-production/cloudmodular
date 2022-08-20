@@ -32,11 +32,13 @@ class DataInfoBase(BaseModel):
 class DataInfoCreate(DataInfoBase):
     is_dir: bool
     user_id: int
+    size: int
 
 class DataInfoUpdate(DataInfoBase):
     user_id: int
 
 class DataInfoRead(DataInfoBase):
+    size: int
     is_dir: bool
     created: datetime
     id: int
