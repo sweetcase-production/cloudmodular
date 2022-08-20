@@ -1,7 +1,6 @@
 import shutil
 from typing import Any, Dict, List, Optional
 from fastapi import UploadFile
-from sqlalchemy import and_
 import os
 import datetime
 
