@@ -13,13 +13,12 @@
     <img src="https://img.shields.io/badge/Docker-2CA5E0?style=flat-square&logo=docker&logoColor=white">
     <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white">
 </div>
-
 <div align="center">
 <a href="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular" > 
  <img src="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular/branch/main/graph/badge.svg?token=D7L8SNPUKF"/>
 </a>
 <img src="https://img.shields.io/badge/app--version-0.1.0--alpha1-blue">
-<img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/Sweetcase-Cobalto/cloudmodular?label=server-version">
+<img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/release/Sweetcase-Cobalto/cloudmodular?color=black&label=server-version">
 </div>
 
 The Constructive Cloud Service for your NAS Server
