@@ -72,7 +72,7 @@ $ sudo docker run -it -d -p [포트]:[포트] \
     -e JWT_ALGORITHM=HS256 \
     -e DATA_SHARED_LENGTH=[공유 기한] \
     ... DB 관련 ENV 추가 (아래 참고) ...
-    --name [container name] ghcr.io/sweetcase-cobalto/cloudmodular:0.1.0-alpha1
+    --name [container name] ghcr.io/sweetcase-cobalto/cloudmodular:0.1.0-beta1
 ```
 * ```SERVER_PORT```: 연결할 서버 포트 입니다.
 * ```SERVER_STORAGE```: 데이터가 저장될 스토리지를 정합니다. 스토리지 위치는 항상 Docker 밖의 디렉토리와 동기화가 되어야 하기 때문에 앞에 ```-v```를 사용하여 외부 디렉토리 루트를 Docker 내부 루트로 마운트 합니다.
