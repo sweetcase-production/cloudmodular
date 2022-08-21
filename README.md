@@ -17,7 +17,7 @@
 <a href="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular" > 
  <img src="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular/branch/main/graph/badge.svg?token=D7L8SNPUKF"/>
 </a>
-<img src="https://img.shields.io/badge/app--version-0.1.0--alpha1-blue">
+<img src="https://img.shields.io/badge/app--version-0.1.0--beta1-blue">
 <img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/release/Sweetcase-Cobalto/cloudmodular?color=black&label=server-version">
 </div>
 
