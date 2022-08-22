@@ -89,7 +89,7 @@ class UserCRUDManager(CRUDManager):
             user_email=user_email,
             user_id=user_id
         )
-        UserStorageQuery().destory(user_id=removed_id)
+        UserStorageQuery().destroy(user_id=removed_id)
     
     def search(self) -> List[User]:
         return UserDBQuery().search()
@@ -177,7 +177,7 @@ class UserManager(FrontendManager):
         )
         return user
 
-    def remove_user(self, token: str, pk: str):
+    def remove_user(self, token: str, pk: int):
         try:
             # token에서 해당 유저 정보를 추출
             decoded_token = LoginTokenGenerator().decode(token)
@@ -197,8 +197,7 @@ class UserManager(FrontendManager):
             & (~SameOnly(operator.id, pk))
         ):
             raise PermissionError()
-        UserDBQuery().destroy(user_id=pk)
-        UserStorageQuery().destroy(user_id=pk)
+        UserCRUDManager().destroy(user_id=pk)
 
     def search_users(self, token: str) -> List[User]:
         try:
