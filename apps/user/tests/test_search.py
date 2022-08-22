@@ -30,12 +30,12 @@ def api():
     
     accounts.append(admin_info)
     # 10개의 클라이언트 생성
-    for k in range(10):
+    for k in range(3):
         req = {
             'email': f'seokbong60{k}@gmail.com',
             'name': f'jeonhyun{k}',
             'passwd': 'password0123',
-            'storage_size': 5,
+            'storage_size': 1,
         }
         client = UserCRUDManager().create(**req)
         req['id'] = client.id
