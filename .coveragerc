@@ -6,3 +6,4 @@ exclude_lines=
     except Exception
     raise NotImplemented()
     raise NotImplementedError()
+    pass

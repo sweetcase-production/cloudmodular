@@ -30,7 +30,6 @@ from architecture.query.permission import (
 )
 from architecture.manager.base_manager import FrontendManager
 from settings.base import SERVER
-from system.connection.generators import DatabaseGenerator
 
 class DataFileCRUDManager(CRUDManager):
 
@@ -159,8 +158,7 @@ class DataFileCRUDManager(CRUDManager):
             raise DataAlreadyExists()
         
         if not new_root:
-            # raw_root가 스토리지에 존재하지 않음
-            # DB상에서 삭제
+            # 생성 실패: 타겟 데이터가 스토리지에 존재하지 않음
             DataDBQuery().destroy(data_id)
             raise DataNotFound()
         
@@ -267,8 +265,7 @@ class DataDirectoryCRUDManager(CRUDManager):
             raise DataAlreadyExists()
         
         if not new_root:
-            # raw_root가 스토리지에 존재하지 않음
-            # DB상에서 삭제
+            # 생성 실패: 타겟 데이터가 스토리지에 존재하지 않음
             DataDBQuery().destroy(data_id)
             raise DataNotFound()
         

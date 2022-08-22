@@ -1,4 +1,5 @@
 import pytest
+import os
 from fastapi.testclient import TestClient
 from fastapi import UploadFile, status
 
@@ -9,6 +10,7 @@ from apps.storage.utils.managers import (
     DataFileCRUDManager,
     DataDirectoryCRUDManager,
 )
+from settings.base import SERVER
 from system.bootloader import Bootloader
 
 from apps.storage.models import DataInfo
@@ -156,6 +158,16 @@ def test_no_exists_data(api: TestClient):
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
+def test_user_not_found(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        f'/api/users/999999/datas/0',
+        headers={'token': token},
+        params={'method': 'info'}
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
 def test_search_file(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
@@ -261,3 +273,32 @@ def test_download_directory(api: TestClient):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.headers.get('content-type') == 'application/zip'
+
+
+    """
+    DB에는 데이터가 존재하는데 스토리지에는 없다.
+    이때 DB데이터를 삭제하고 404를 호출한다.
+    """
+
+def test_db_exists_but_no_in_storage(api: TestClient):
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    # mydir/hi.txt 삭제
+    removed_path = \
+        f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt'
+    os.remove(removed_path)
+    # Request
+    res = api.get(
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
+        headers={'token': token},
+        params={'method': 'info'}
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+    session = DatabaseGenerator.get_session()
+    # DB에도 삭제되었는지 확인
+    try:
+        assert not session.query(DataInfo).filter(
+            DataInfo.id == treedir['mydir']['hi.txt']['id']
+        ).scalar()
+    finally:
+        session.close()

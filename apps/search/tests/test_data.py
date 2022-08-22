@@ -155,6 +155,16 @@ def test_no_token(api: TestClient):
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+def test_target_user_not_exists(api: TestClient):
+    # 없는 User는 비어있는 상태로 리턴
+    email, passwd = admin_info["email"], admin_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',  params={'root': '/', 'user': 'adkfjlsd'},
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == []
 
 def test_client_access_others_data(api: TestClient):
     email, passwd = other_info["email"], other_info["passwd"]
@@ -173,6 +183,50 @@ def test_client_access_others_data(api: TestClient):
         headers={'token': token}
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_omit_root(api: TestClient):
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'user': client_info['name'], 
+            'sort_name': 1
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+def test_search_wrong_root_id(api: TestClient):
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root_id': 99999999,
+            'user': client_info['name'], 
+            'sort_name': 1
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == []
+
+def test_search_root_but_it_is_file(api: TestClient):
+    # 파일이 디렉토리 취급을 받진 않는다.
+    email, passwd = client_info["email"], client_info["passwd"]
+    token = AppAuthManager().login(email, passwd)
+    res = api.get(
+        '/api/search/datas',
+        params={
+            'root_id': treedir['mydir']['hi.txt']['id'],
+            'user': client_info['name'], 
+            'sort_name': 1
+        },
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json() == []
 
 def test_all_search_on_current_root(api: TestClient):
     # 현재 위치에서의 파일/디렉토리만 검색
