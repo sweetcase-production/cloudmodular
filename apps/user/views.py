@@ -6,7 +6,7 @@ import json
 from apps.user.models import User
 from apps.user.schemas import UserRead
 from apps.user.utils.managers import UserManager
-from core.exc import UserAlreadyExists, UserNotFound
+from core.exc import UsageLimited, UserAlreadyExists, UserNotFound
 
 
 user_router = APIRouter(
@@ -61,6 +61,10 @@ class UserView:
         try:
             # 사용자 추가하기
             user: User = UserManager().create_user(token=token, **req)
+        except UsageLimited:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail='해당 용량으로는 더이상 유저를 생성할 수 없습니다.')
         except TypeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

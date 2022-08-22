@@ -29,6 +29,7 @@ class UserCRUDManager(CRUDManager):
         is_admin: bool = False,
     ) -> User:
         # DB Upload
+        # schema -> 실패 시 Validation Error
         user_schema = UserCreate(
             email=email,
             name=name,
@@ -36,6 +37,7 @@ class UserCRUDManager(CRUDManager):
             storage_size=storage_size,
             is_admin=is_admin
         )
+
         user: User = UserDBQuery().create(user_schema)
         # Directory 생성
         try:

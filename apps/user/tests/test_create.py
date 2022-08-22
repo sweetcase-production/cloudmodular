@@ -193,3 +193,17 @@ def test_success(api: TestClient):
     main_root = f'{SERVER["storage"]}/storage/{res.json()["id"]}/root'
     
     assert os.path.isdir(main_root)
+
+def test_limited_usage(api: TestClient):
+    # 모든 유저가 해당 파티션의 50% 이상을 사용할 수 없다.
+    # 10TB 이하의 파티션에 사용 권장.
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    req = {
+        'email': 'themail2@gmail.com',
+        'name': 'user0021',
+        'passwd': 'passwd01',
+        'storage_size': 10_000, # 10,000 GB = 10TB
+    }
+    res = api.post('/api/users', json=req, headers={'token': token})
+    assert res.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE

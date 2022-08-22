@@ -18,7 +18,7 @@ def _validate_name(cls, name: str):
 
 def _validate_storage_size(cls, storage_size: int):
     # 1 GB이상 20GB 이하 (차후에 변경 예정)
-    if not (1 <= storage_size <= 20):
+    if not (1 <= storage_size):
         raise ValueError('용량 크기가 맞지 않습니다.')
     return storage_size
 
