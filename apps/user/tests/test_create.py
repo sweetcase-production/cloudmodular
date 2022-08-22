@@ -161,7 +161,7 @@ def test_upload_same_data(api: TestClient):
         'email': client_info['email'],
         'name': 'user001',
         'passwd': 'passwd01',
-        'storage_size': 5,
+        'storage_size': 1,
     }
     res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -170,7 +170,7 @@ def test_upload_same_data(api: TestClient):
         'email': 'themail@gmail.com',
         'name': client_info['name'],
         'passwd': 'passwd01',
-        'storage_size': 5,
+        'storage_size': 1,
     }
     res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -183,7 +183,7 @@ def test_success(api: TestClient):
         'email': 'themail@gmail.com',
         'name': 'user001',
         'passwd': 'passwd01',
-        'storage_size': 5,
+        'storage_size': 1,
     }
     res = api.post('/api/users', json=req, headers={'token': token})
     assert res.status_code == status.HTTP_201_CREATED
