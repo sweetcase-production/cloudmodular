@@ -2,6 +2,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.sql import func
 from typing import Dict, List, Optional
 import bcrypt
+import shutil
 
 from apps.user.models import User
 from apps.data_tag.models import DataTag
@@ -16,7 +17,8 @@ from architecture.query.crud import (
     QuerySearcher,
     QueryUpdator
 )
-from core.exc import UserAlreadyExists, UserNotFound
+from core.exc import UsageLimited, UserAlreadyExists, UserNotFound
+from settings.base import SERVER
 from system.connection.generators import DatabaseGenerator
 
 
@@ -37,6 +39,30 @@ class UserDBQueryCreator(QueryCreator):
             raise PermissionError()
         try:
             # DB 저장
+            """
+            모든 유저가 사용하는 모든 용량이
+            해당 파티션의 남아있는 용량의 50%
+            이상을 넘어가면 안된다.
+            """
+            # 모든 사용자가 사용하고 있는 용량의 합
+            user_all_size = session.query(func.sum(User.storage_size)).scalar()
+            if user_all_size is None:
+                user_all_size = 0
+            user_all_size *= (10 ** 9) # GB -> byte
+            # 실제로 사용되고 있는 용량 (모든 파일의 크기)
+            already_used = session.query(func.sum(DataInfo.size)).scalar()
+            if already_used is None:
+                already_used = 0
+            created_user_size = user_format.storage_size * (10 ** 9) # GB -> byte
+            # 해당 파티션에 남아있는 용량 구하기
+            _, _, disk_free = shutil.disk_usage(SERVER['storage'])
+            # real_free = 실제로 사용할 수 있는 남은 공간
+            real_free = disk_free - already_used
+            # (생성될 유저의 최대 용량 + 현재 모든 사용자의 최대 용량) / (사용 가능한 용량)
+            # 0.5 이상 넘어가면 안됨
+            percentage = (user_all_size + created_user_size) / real_free
+            if percentage >= 0.5:
+                raise UsageLimited()
 
             # Serializer -> Dict
             request = user_format.dict()
@@ -163,14 +189,12 @@ class UserDBQueryDestroyer(QueryDestroyer):
             session.close()
 
 class UserDBQuerySearcher(QuerySearcher):
-    def __call__(self, page: int, page_size: int):
-        start = page_size * (page - 1)
+    def __call__(self):
         session = DatabaseGenerator.get_session()
         q = session.query(User)
         try:
             users: List[User] = \
-                q.order_by(User.created.asc()) \
-                    .offset(start).limit(page_size).all()
+                q.order_by(User.created.asc()).all()
         except Exception as e:
             raise e
         else:

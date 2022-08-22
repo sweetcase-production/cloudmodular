@@ -27,7 +27,7 @@ def api():
         'email': 'seokbong60@gmail.com',
         'name': 'jeonhyun',
         'passwd': 'password0123',
-        'storage_size': 5,
+        'storage_size': 1,
         'is_admin': True,
     }
     admin = UserCRUDManager().create(**admin_info)
@@ -37,7 +37,7 @@ def api():
         'email': 'seokbong61@gmail.com',
         'name': 'jeonghyun2',
         'passwd': 'passwd0123',
-        'storage_size': 10,
+        'storage_size': 1,
     }
     client = UserCRUDManager().create(**client_info1)
     client_info1['id'] = client.id
@@ -46,7 +46,7 @@ def api():
         'email': 'seokbong62@gmail.com',
         'name': 'jeonghyun3',
         'passwd': 'passwd0123',
-        'storage_size': 10,
+        'storage_size': 1,
     }
     client = UserCRUDManager().create(**client_info2)
     client_info2['id'] = client.id

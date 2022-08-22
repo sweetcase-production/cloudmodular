@@ -30,7 +30,7 @@ RUN apt install -y default-libmysqlclient-dev
 RUN apt install -y git
 # setting backend
 WORKDIR /
-RUN git clone https://github.com/SweetCase-Cobalto/cloudmodular.git
+RUN git clone -b release/v0.1.0 https://github.com/SweetCase-Cobalto/cloudmodular.git
 WORKDIR /cloudmodular
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
@@ -38,7 +38,7 @@ RUN pip install -r requirements.txt
 RUN curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 RUN apt-get install -y nodejs
 WORKDIR /
-RUN git clone https://github.com/SweetCase-Cobalto/cloudmodular-web.git
+RUN git clone -b release/v0.1.0 https://github.com/SweetCase-Cobalto/cloudmodular-web.git
 WORKDIR /cloudmodular-web
 RUN npm i
 RUN npm run build

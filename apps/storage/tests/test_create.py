@@ -281,6 +281,20 @@ def test_success_directory(api: TestClient):
     created_dirs['mydir'] = main_mydir
     created_dirs['mydir/subdir'] = sub_subdir
 
+def test_failed_upload_file_same_named_directory(api: TestClient):
+    # 파일 이름이 기존의 디렉토리 이름과 같으면 생성할 수 없다.
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+
+    reload_file()
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/0',
+        headers={'token': token},
+        files = [('files', ('mydir', f1)),]
+    )
+    assert res.status_code == status.HTTP_201_CREATED
+    assert res.json() == [] # 생성에 실패했으므로 비어있는 리스트가 된다.
+
 def admin_can_create_to_other_storage(api: TestClient):
     # 관리자는 다른 계정에 디렉토리를 생성할 수 있다.
     email, passwd = admin_info['email'], admin_info['passwd']
@@ -400,7 +414,6 @@ def test_rewrite_file(api: TestClient):
     # 같은 이릉의 파일 업로드일 경우, 덮어쓰기 가능
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-
     # 메인 디렉토리 파일 업로드
     reload_file()
     res = api.post(
@@ -411,17 +424,15 @@ def test_rewrite_file(api: TestClient):
         ]
     )
     assert res.status_code == status.HTTP_201_CREATED
-
     # 파일 존재 확인
     assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt')
 
 def test_try_create_on_file(api: TestClient):
     # 파일위에 파일/디렉토리를 생성하는 것은 불가능
     # 디렉토리를 못찾은 걸로 간주
-
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-
+    # Test
     reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/{f1_id}',
@@ -437,9 +448,9 @@ def test_usage_limited(api: TestClient):
     target: DataInfo = \
         session.query(DataInfo) \
             .filter(DataInfo.id == f1_id).scalar()
-    target.size = 10 * (10 ** 9)    # 10GB
+    tmp_size, target.size = target.size, 10 * (10 ** 9)
     session.commit()
-    
+    session.refresh(target)
     # 테스트
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
@@ -450,6 +461,38 @@ def test_usage_limited(api: TestClient):
         files = [('files', (f3.name, f3))]
     )
     assert res.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    # 원상태
+    target.size = tmp_size
+    session.commit()
+    session.refresh(target)
+    session.close()
 
-
-
+def test_db_no_exists_but_storage_exists(api: TestClient):
+    # DB에는 같은 이름의 파일 또는 디렉토리가 없는데 스토리지에는 존재하는 경우
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    # /mydir/hi.txt 삭제
+    # f1_id로 테스트: f1_id -> /mydir/hi.txt
+    # DB 삭제
+    session = DatabaseGenerator.get_session()
+    removed_target = \
+        session.query(DataInfo) \
+            .filter(DataInfo.id == created_dirs["mydir"]["id"]).scalar()
+    session.delete(removed_target)
+    session.commit()
+    # Test
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/0',
+        headers={'token': token},
+        json={'dirname': 'mydir'}
+    )
+    assert res.status_code == status.HTTP_201_CREATED
+    output = res.json()
+    assert output == [{
+        'is_dir': True,
+        'id': output[0]['id'],
+        'root': '/',
+        'name': 'mydir',
+        'size': 0,
+        'created': output[0]['created'],
+    }]

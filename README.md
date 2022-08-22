@@ -17,8 +17,7 @@
 <a href="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular" > 
  <img src="https://codecov.io/gh/SweetCase-Cobalto/cloudmodular/branch/main/graph/badge.svg?token=D7L8SNPUKF"/>
 </a>
-<img src="https://img.shields.io/badge/app--version-0.1.0--beta1-blue">
-<img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/release/Sweetcase-Cobalto/cloudmodular?color=black&label=server-version">
+<img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/Sweetcase-Cobalto/cloudmodular?style=flat-square">
 </div>
 
 The Constructive Cloud Service for your NAS Server
@@ -42,7 +41,7 @@ The Constructive Cloud Service for your NAS Server
 * 기본적인 파일/디렉토리를 관리합니다.
     * 생성/수정/삭제/다운로드
 * 파일/디렉토리에 대한 전체 공유가 가능합니다.
-    * 공유 기한 7일
+    * 공유 기한 선택 가능
 * 파일/디렉토리에 즐겨찾기를 통한 빠른 데이터 접근
 * 다양한 검색 필터링
     * 연관 검색어
@@ -55,7 +54,9 @@ The Constructive Cloud Service for your NAS Server
             > 단 스토리지에 있는 파일/디렉토리를 수정 또는 삭제 시 데이터 동기화에 문제가 생길 수 있습니다.
     * 외부 데이터베이스 지원
         * 마찬가지로 SQLite 뿐만 아니라 MySQL를 사용할 수 있습니다.
-
+* 여러 사용자 관리
+    * 하나의 관리자가 여러 사용자를 생성 및 관리할 수 있습니다.
+    * 모든 사용자가 사용할 수 있는 최대 용량 크기는 해당 스토리지가 위치한 디스크 파티션 용량 중 남아있는 용량의 50%입니다. 따라서 과도한 사용으로 인한 다른 데이터 관리에 방해받지 않습니다.
 * * *
 
 ## 설치 및 실행 방법(사용자 기준)
@@ -72,7 +73,7 @@ $ sudo docker run -it -d -p [포트]:[포트] \
     -e JWT_ALGORITHM=HS256 \
     -e DATA_SHARED_LENGTH=[공유 기한] \
     ... DB 관련 ENV 추가 (아래 참고) ...
-    --name [container name] ghcr.io/sweetcase-cobalto/cloudmodular:0.1.0-beta1
+    --name [container name] ghcr.io/sweetcase-cobalto/cloudmodular:0.1.0
 ```
 * ```SERVER_PORT```: 연결할 서버 포트 입니다.
 * ```SERVER_STORAGE```: 데이터가 저장될 스토리지를 정합니다. 스토리지 위치는 항상 Docker 밖의 디렉토리와 동기화가 되어야 하기 때문에 앞에 ```-v```를 사용하여 외부 디렉토리 루트를 Docker 내부 루트로 마운트 합니다.

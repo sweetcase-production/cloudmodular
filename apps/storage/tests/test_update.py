@@ -1,4 +1,4 @@
-from unittest import TestCase
+import shutil
 from fastapi import UploadFile, status
 from fastapi.testclient import TestClient
 import pytest
@@ -169,6 +169,18 @@ def test_other_access_failed(api: TestClient):
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+def test_user_not_found(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+
+    res = api.patch(
+        f'/api/users/999999999/datas/0',
+        json={'name': 'newdir'},
+        headers={'token': token},
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
 def test_data_not_found(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
@@ -191,7 +203,7 @@ def test_name_validation(api: TestClient):
     )
     assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-def test_update_to_same_named_file(api: TestCase):
+def test_update_to_same_named_file(api: TestClient):
     # 다른 이름으로 수정하려고 했는데 이미 같은 이름의 파일/디렉토리가 존재한다.
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
@@ -262,3 +274,31 @@ def test_update_dirname(api: TestClient):
         assert query.filter(DataInfo.root.startswith('/mydir/')).count() == 0
         assert query.filter(DataInfo.root.startswith('/newdir/')).count() == 4
         session.close()
+"""
+/mydir -> /newdir로 변경
+/mydir/subdir/hi.txt -> /mydir/subdir/new.txt로 변경
+이점 유의하면서 추가 테스트코드 작성할 것
+"""
+def test_db_exists_but_storage_no_exists(api: TestClient):
+    email, passwd = admin_info['email'], admin_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    # /newdir/hi.txt를 스토리지 상에서 삭제 
+    os.remove(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/newdir/hi.txt')
+    # Request
+    res = api.patch(
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
+        json={'name': 'other.txt'},
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+    # Directory도 테스트
+    # newdir 지우기
+    shutil.rmtree(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/newdir')
+    # Request
+    res = api.patch(
+        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
+        json={'name': 'others'},
+        headers={'token': token}
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
