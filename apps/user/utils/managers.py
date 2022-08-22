@@ -89,12 +89,8 @@ class UserCRUDManager(CRUDManager):
         )
         UserStorageQuery().destory(user_id=removed_id)
     
-    def search(self, page: int, page_size: int) -> List[User]:
-        if not (1 <= page_size <= 20):
-            raise ValueError('페이지의 크기가 올바르지 않습니다.')
-        if not (page >= 1):
-            raise ValueError('페이지가 올바르지 않습니다.')
-        return UserDBQuery().search(page=page, page_size=page_size)
+    def search(self) -> List[User]:
+        return UserDBQuery().search()
 
 class UserManager(FrontendManager):
 
@@ -202,7 +198,7 @@ class UserManager(FrontendManager):
         UserDBQuery().destroy(user_id=pk)
         UserStorageQuery().destroy(user_id=pk)
 
-    def search_users(self, token: str, page_size: str, page: str) -> List[User]:
+    def search_users(self, token: str) -> List[User]:
         try:
             # token에서 해당 유저 정보를 추출
             decoded_token = LoginTokenGenerator().decode(token)
@@ -218,13 +214,7 @@ class UserManager(FrontendManager):
         if not bool(AdminOnly(operator.is_admin) & LoginedOnly(issue)):
             raise PermissionError()
         # page parameter Integer 변형
-        try:
-            page_size = int(page_size)
-            page = int(page)
-        except (TypeError, ValueError):
-            raise ValueError('파라미터의 자료형이 맞지 않습니다.')
-        # 검색
-        return UserCRUDManager().search(page=page, page_size=page_size)
+        return UserCRUDManager().search()
 
 
     def get_user_usage(self, token: str, user_id: int):

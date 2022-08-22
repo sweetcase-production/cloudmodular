@@ -1,4 +1,3 @@
-import datetime
 import pytest
 from unittest import TestCase as AssertFunc
 from fastapi import status
@@ -58,51 +57,8 @@ def test_no_admin(api: TestClient):
     token = AppAuthManager().login(email, passwd)
 
     res = api.get(
-        '/api/users/search',
-        params={'page_size': 3, 'page': 1}, headers={'Token': token})
+        '/api/users/search', headers={'Token': token})
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
-
-def test_without_paging(api: TestClient):
-    email, passwd = accounts[0]['email'], accounts[0]['passwd']
-    token = AppAuthManager().login(email, passwd)
-    
-    res = api.get('/api/users/search', headers={'Token': token})
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.get(
-        '/api/users/search', 
-        params={'page_size': 1}, headers={'Token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.get(
-        '/api/users/search', 
-        params={'page': 1}, headers={'Token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-def test_paging_validation(api: TestClient):
-    email, passwd = accounts[0]['email'], accounts[0]['passwd']
-    token = AppAuthManager().login(email, passwd)
-
-    res = api.get(
-        '/api/users/search',
-        params={'page_size': 0, 'page': 1}, headers={'Token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    # page_size는 21이상 넘기지 못한다.
-    res = api.get(
-        '/api/users/search',
-        params={'page_size': 21, 'page': 1}, headers={'Token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    res = api.get(
-        '/api/users/search',
-        params={'page_size': 10, 'page': 0}, headers={'Token': token}
-    )
-    assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_success(api: TestClient):
     email, passwd = accounts[0]['email'], accounts[0]['passwd']
@@ -118,13 +74,6 @@ def test_success(api: TestClient):
     
     # 테스트 시작
     res = api.get(
-        '/api/users/search',
-        params={'page_size': 3, 'page': 1}, headers={'Token': token})
+        '/api/users/search', headers={'Token': token})
     assert res.status_code == status.HTTP_200_OK
-    AssertFunc().assertCountEqual(res.json(), answer[3*0:3*1])
-
-    res = api.get(
-        '/api/users/search',
-        params={'page_size': 3, 'page': 4}, headers={'Token': token})
-    assert res.status_code == status.HTTP_200_OK
-    AssertFunc().assertCountEqual(res.json(), answer[3*3:3*4])
+    AssertFunc().assertCountEqual(res.json(), answer)

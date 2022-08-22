@@ -163,14 +163,12 @@ class UserDBQueryDestroyer(QueryDestroyer):
             session.close()
 
 class UserDBQuerySearcher(QuerySearcher):
-    def __call__(self, page: int, page_size: int):
-        start = page_size * (page - 1)
+    def __call__(self):
         session = DatabaseGenerator.get_session()
         q = session.query(User)
         try:
             users: List[User] = \
-                q.order_by(User.created.asc()) \
-                    .offset(start).limit(page_size).all()
+                q.order_by(User.created.asc()).all()
         except Exception as e:
             raise e
         else:

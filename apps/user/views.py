@@ -282,10 +282,8 @@ class UserSearchView:
                 detail='server error')
         
         try:
-            # 유저 데이터 가져오기
-            queries = request.query_params._dict
             users: List[User] = \
-                UserManager().search_users(token=token, **queries)
+                UserManager().search_users(token=token)
         except TypeError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
