@@ -483,3 +483,16 @@ def test_db_no_exists_but_storage_exists(api: TestClient):
         'size': 0,
         'created': output['created'],
     }
+
+def test_failed_over_size_of_file(api: TestClient):
+    # 제한 크기 이상의 파일 업로드 불가능 (여기서는 1MB 이상)
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    img = open(f'{TEST_EXAMLE_ROOT}/piano.jpg', 'rb')
+    
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/0',
+        headers={'token': token},
+        files=[('file', (img.name, img)),]
+    )
+    assert res.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE

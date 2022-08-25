@@ -1,6 +1,14 @@
 import json
-from typing import List, Optional
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, UploadFile, status
+from typing import Optional
+from fastapi import (
+    APIRouter, 
+    BackgroundTasks, 
+    HTTPException, 
+    Request, 
+    Response, 
+    UploadFile, 
+    status
+)
 import pydantic
 from fastapi.responses import FileResponse
 
@@ -16,14 +24,12 @@ storage_router = APIRouter(
 )
 
 class StorageView:
-
     """
     (POST)      /api/users/{user_id}/datas/{data_id}    파일/디렉토리 생성
     (GET)       /api/users/{user_id}/datas/{data_id}    파일/디렉토리 기본 정보
     (PATCH)     /api/users/{user_id}/datas/{data_id}    파일/디렉토리 이름 수정
     (DELETE)    /api/users/{user_id}/datas/{data_id}    파일/디렉토리 삭제
     """
-
 
     @staticmethod
     @storage_router.post(

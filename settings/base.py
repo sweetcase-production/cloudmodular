@@ -1,6 +1,7 @@
 import os
 
 from dotenv import load_dotenv
+load_dotenv()
 
 def _get_database_info():
     t = os.getenv('DB_TYPE')
@@ -19,7 +20,8 @@ SERVER = {
     'host': os.getenv('SERVER_HOST'),
     'port': int(os.getenv('SERVER_PORT')),
     'storage': os.getenv('SERVER_STORAGE') + '/cloudmodular',
-    'data-shared-length': int(os.getenv('DATA_SHARED_LENGTH')) * 24 * 60
+    'data-shared-length': int(os.getenv('DATA_SHARED_LENGTH')) * 24 * 60,
+    'maximum-upload-size': int(os.getenv('MAX_UPLOAD_LEN')),
 }
 DATABASE = {
     'type': os.getenv('DB_TYPE'),
