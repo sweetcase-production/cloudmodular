@@ -72,6 +72,7 @@ $ sudo docker run -it -d -p [포트]:[포트] \
     -e JWT_KEY=[jwt key] \
     -e JWT_ALGORITHM=HS256 \
     -e DATA_SHARED_LENGTH=[공유 기한] \
+    -e MAX_UPLOAD_LEN=[업로드 최대 크기 (MB 단위)] \
     ... DB 관련 ENV 추가 (아래 참고) ...
     --name [container name] ghcr.io/sweetcase-cobalto/cloudmodular:0.1.0
 ```
@@ -85,6 +86,7 @@ $ sudo docker run -it -d -p [포트]:[포트] \
 * ```JWT_KEY```: Jwt암호화를 위한 Key를 입력합니다. 어느 문자열이든 상관없습니다.
 * ```JWT_ALGORITHM```: JWT Algorithm으로 HS256을 권장합니다.
 * ```DATA_SAHRED_LENGTH```: 데이터를 공유할 때, 그 공유 기간 입니다. 단위를 "일" 입니다.
+* ```MAX_UPLOAD_LEN```: 서버에 요청할 수 있는 최대 크기 입니다. 1MB 단위이며 파일 최대 업로드 크기를 설정할 때 사용합니다.
 
 ### SQLite를 사용하는 경우
 ```
@@ -147,6 +149,7 @@ JWT_KEY=<jwt key>
 JWT_ALGORITHM=<jwt 알고리즘 (HS256 권장)>
 
 DATA_SHARED_LENGTH=<파일/디렉토리 공유 길이 (ex: 3 -> 3일)>
+MAX_UPLOAD_LEN=<업로드 최대 크기 (MB 단위)>
 ```
 5. 테스트를 진행하고 싶은 경우, 아래와 같이 명령어를 입력합니다. (단 테스트를 진행할 때 DB나, 스토리지에 어느 데이터도 남아있어서는 안됩니다.)
 ```
