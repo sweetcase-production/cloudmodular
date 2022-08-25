@@ -55,7 +55,6 @@ def api():
     """
     hi = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
     hi2 = open(f'{TEST_EXAMLE_ROOT}/hi2.txt', 'rb')
-    
     # add directory mydir on root
     mydir = DataDirectoryCRUDManager().create(
         root_id=0,
@@ -64,33 +63,23 @@ def api():
     )
     treedir['mydir']['id'] = mydir.id
     # add hi.txt, hi2.txt on mydir
-    files = DataFileCRUDManager().create(
-        root_id=mydir.id,
-        user_id=user.id,
-        files=[
-            UploadFile(filename=hi.name, file=hi),
-            UploadFile(filename=hi2.name, file=hi2)
-        ]
-    )
+    files = []
+    for file in [hi, hi2]:
+        files.append(DataFileCRUDManager().create(
+            root_id=mydir.id, user_id=user.id,
+            file=UploadFile(filename=file.name, file=file)))
     treedir['mydir']['hi.txt']['id'] = files[0].id
     treedir['mydir']['hi2.txt']['id'] = files[1].id
     # add subdir on mydir
     subdir = DataDirectoryCRUDManager().create(
-        root_id=mydir.id,
-        user_id=user.id,
-        dirname='subdir'
-    )
+        root_id=mydir.id, user_id=user.id, dirname='subdir')
     treedir['mydir']['subdir']['id'] = subdir.id
     # add hi.txt on subdir
     files = DataFileCRUDManager().create(
         root_id=subdir.id,
         user_id=user.id,
-        files=[
-            UploadFile(filename=hi.name, file=hi),
-        ]
-    )
-    treedir['mydir']['subdir']['hi.txt']['id'] = files[0].id
-
+        file=UploadFile(filename=hi.name, file=hi))
+    treedir['mydir']['subdir']['hi.txt']['id'] = files.id
     # Add Admin Info
     admin_info = {
         'email': 'seokbong61@gmail.com',
@@ -101,7 +90,6 @@ def api():
     }
     user = UserCRUDManager().create(**admin_info)
     admin_info['id'] = user.id
-
     # Add Other Info
     other_info = {
         'email': 'seokbong62@gmail.com',
@@ -111,7 +99,6 @@ def api():
     }
     user = UserCRUDManager().create(**other_info)
     other_info['id'] = user.id
-
     # Return test api
     yield TestClient(app)
     # Close all files and remove all data

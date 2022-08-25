@@ -55,9 +55,9 @@ def api():
     files = DataFileCRUDManager().create(
         root_id=0,
         user_id=client_info["id"],
-        files=[UploadFile(filename=hi.name, file=hi)]
+        file=UploadFile(filename=hi.name, file=hi)
     )
-    file_id = files[0].id
+    file_id = files.id
     DataTagQuery().create(file_id, ['tag1', 'tag10', 'tag2'])
 
     yield TestClient(app)

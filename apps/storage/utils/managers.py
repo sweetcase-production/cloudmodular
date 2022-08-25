@@ -34,7 +34,7 @@ from settings.base import SERVER
 class DataFileCRUDManager(CRUDManager):
 
     def create(
-        self, root_id: int, user_id: int, files: List[UploadFile]
+        self, root_id: int, user_id: int, file: UploadFile
     ) -> List[DataInfo]:
         """
         파일 생성
@@ -65,67 +65,55 @@ class DataFileCRUDManager(CRUDManager):
             # 상위 디렉토리 절대경로 생성
             dir_root = f'{directory_info.root}{directory_info.name}/'
         
-        # File 돌면서 차례대로 생성 및 덮어쓰기
-        for file in files:
-            # 파일 이름 및 절대경로 생성
-            filename = file.filename.split('/')[-1]
-            file_root = \
-                f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{filename}'
-            # 같은 이름의 데이터가 DB에 남아있는지 조사
-            db_already_info: DataInfo = DataDBQuery().read(
-                user_id=user_id, full_root=(dir_root, filename))
-            db_already_id = db_already_info.id if db_already_info else 0
-
-            if db_already_id and db_already_info.is_dir:
-                # 데이터가 존재하는데 디렉토리면 업로드 불가능
-                continue
-            else:
-                # 나머지는 업데이트 혹은 생성 가능
-                if DataStorageQuery().read(root=file_root, is_dir=True) or \
-                    DataStorageQuery().read(root=file_root, is_dir=False):
-                    # 같은 이름의 데이터가 스토리지에 존재하면 삭제
-                    DataStorageQuery().destroy(root=file_root)
-            # Validation 측정 틀리면 ValidationError 발생
-            input_format: DataInfoCreate = DataInfoCreate(
-                name=filename,
-                user_id=user_id,
-                root=dir_root,
-                is_dir=False,
-                size=0)
-            # 데이터 생성
-            try:
-                data_size = \
-                    DataStorageQuery() \
-                        .create(
-                            root=file_root,
-                            is_dir=False, file=file,
-                            user_id=user_id)
-            except UsageLimited as e:
-                # 용량 초과는 지속하지 않고 raise처리한다.
-                raise e
-            except Exception:
-                # 실패시 다음 파일로 넘김
-                continue
-            # 파일 크기 추가
-            input_format.size = data_size
-            try:
-                if db_already_id:
-                    data_info = \
-                        DataDBQuery().update_file_automatic(
-                            data_id=db_already_id,
-                            data_format=input_format)
-                else:
-                    data_info = \
-                        DataDBQuery().create(
-                            data_format=input_format)
-            except Exception:
-                # 실패시 스토리지 루트 삭제
+        # 파일 이름 및 절대경로 생성
+        filename = file.filename.split('/')[-1]
+        file_root = \
+            f'{SERVER["storage"]}/storage/{user_id}/root{dir_root}{filename}'
+        # 같은 이름의 데이터가 DB에 남아있는지 조사
+        db_already_info: DataInfo = DataDBQuery().read(
+            user_id=user_id, full_root=(dir_root, filename))
+        db_already_id = db_already_info.id if db_already_info else 0
+        if db_already_id and db_already_info.is_dir:
+            # 데이터가 존재하는데 디렉토리면 업로드 불가능
+            raise DataAlreadyExists()
+        else:
+            # 나머지는 업데이트 혹은 생성 가능
+            if DataStorageQuery().read(root=file_root, is_dir=True) or \
+                DataStorageQuery().read(root=file_root, is_dir=False):
+                # 같은 이름의 데이터가 스토리지에 존재하면 삭제
                 DataStorageQuery().destroy(root=file_root)
-                continue
+        # Validation 측정 틀리면 ValidationError 발생
+        input_format: DataInfoCreate = DataInfoCreate(
+            name=filename,
+            user_id=user_id,
+            root=dir_root,
+            is_dir=False,
+            size=0)
+        # 데이터 생성
+        data_size = \
+            DataStorageQuery() \
+                .create(
+                    root=file_root,
+                    is_dir=False, file=file,
+                    user_id=user_id)
+        # 파일 크기 추가
+        input_format.size = data_size
+        try:
+            if db_already_id:
+                data_info = \
+                    DataDBQuery().update_file_automatic(
+                        data_id=db_already_id,
+                        data_format=input_format)
             else:
-                # 성공
-                res.append(data_info)
-        return res
+                data_info = \
+                    DataDBQuery().create(
+                        data_format=input_format)
+        except Exception as e:
+            # 실패시 스토리지 루트 삭제
+            DataStorageQuery().destroy(root=file_root)
+            raise e
+        else:
+            return data_info
 
     def read(self, raw_root: str) -> str:
         # 다운로드 할 때만 사용
@@ -307,9 +295,9 @@ class DataManager(FrontendManager):
         token: str,
         user_id: int,
         data_id: int,
-        request_files: Optional[List[UploadFile]] = None,
+        req_file: Optional[UploadFile] = None,
         req_dirname: Optional[str] = None
-    ) -> List[DataInfo]:
+    ) -> DataInfo:
         """
         파일/디렉토리 생성
 
@@ -335,20 +323,20 @@ class DataManager(FrontendManager):
         ):
             raise PermissionError()
 
-        if request_files:
+        if req_file:
             # 파일 업로드
             return DataFileCRUDManager().create(
                 root_id=data_id,
                 user_id=user_id,
-                files=request_files
+                file=req_file,
             )
         elif req_dirname:
             # 디렉토리 생성
-            return [DataDirectoryCRUDManager().create(
+            return DataDirectoryCRUDManager().create(
                 root_id=data_id,
                 user_id=user_id,
                 dirname=req_dirname
-            )]
+            )
 
     def read(
         self, token: str, 
