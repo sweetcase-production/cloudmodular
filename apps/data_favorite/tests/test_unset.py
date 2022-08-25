@@ -37,6 +37,7 @@ def api():
     # Load Application
     Bootloader.migrate_database()
     Bootloader.init_storage()
+
     # Add Client
     client_info = {
         'email': 'seokbong60@gmail.com',
@@ -64,6 +65,7 @@ def api():
         dirname='mydir'
     )
     treedir['mydir']['id'] = mydir.id
+
     # add hi.txt, hi2.txt on mydir
     files = []
     for file in [hi, hi2]:
@@ -117,14 +119,19 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
-
 def test_no_token(api: TestClient):
+    """
+    토큰 없음
+    """
     res = api.delete(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}/favorites',
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_other_access_failed(api: TestClient):
+    """
+    관리자를 제외한 다른 사람은 접근할 수 없다.
+    """
     email, passwd = other_info['email'], other_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.delete(
@@ -134,6 +141,9 @@ def test_other_access_failed(api: TestClient):
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_data_no_exists(api: TestClient):
+    """
+    대상 데이터가 애초에 존재하지 않는다.
+    """
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.delete(
@@ -143,6 +153,9 @@ def test_data_no_exists(api: TestClient):
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_try_unseted_data(api: TestClient):
+    """
+    설정 해제된 데이터를 또 다시 시도할 수는 없다.
+    """
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.delete(
