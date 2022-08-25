@@ -57,33 +57,6 @@ class DataFavoriteManager(FrontendManager):
         except Exception as e:
             raise e
 
-
-    def get_favorite_list(
-        self, token: str, user_id: int, data_id: int
-    ):
-        # 요청 사용자 구하기
-        op_email, issue = decode_token(token, LoginTokenGenerator)
-        operator: Optional[User] = UserDBQuery().read(user_email=op_email)
-        if not operator:
-            raise PermissionError()
-
-        # Admin이거나 client and 자기 자신이어야 한다
-        if not bool(
-            LoginedOnly(issue) & (
-                AdminOnly(operator.is_admin) | 
-                ((~AdminOnly(operator.is_admin)) & OnlyMine(operator.id, user_id))
-            )
-        ):
-            raise PermissionError()
-        favorites: List[DataInfo] = \
-            DataFavoriteQuery().search(user_id, data_id)
-        result = []
-        
-        for favorite in favorites:
-            result.append({'data_id': favorite.id})
-
-        return result
-        
     def unset_favorite(
         self, token: str, user_id: int, data_id: int
     ):

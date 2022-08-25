@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, status, Response
 
 from apps.data_favorite.utils.managers import DataFavoriteManager
-from core.exc import DataFavoriteNotSelected, DataIsAlreadyFavorited, DataNotFound, IsNotDirectory
+from core.exc import DataFavoriteNotSelected, DataIsAlreadyFavorited, DataNotFound
 
 
 data_favorite_router = APIRouter(
@@ -13,7 +13,6 @@ data_favorite_router = APIRouter(
 class DataFavoriteView:
     """
     (POST)      /api/users/{user_id}/datas/{data_id}/favorites  즐겨찾기 추가
-    (GET)       /api/users/{user_id}/datas/{data_id}/favorites  data_id상의 즐겨찾기된 데이터 갖고오기
     (DELETE)    /api/users/{user_id}/datas/{data_id}/favorites  즐겨찾기 해제
     """
     
@@ -52,44 +51,6 @@ class DataFavoriteView:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='이미 즐겨찾기가 설정되었습니다.')
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail='server error')
-
-    @staticmethod
-    @data_favorite_router.get(
-        path='',
-        status_code=status.HTTP_200_OK)
-    async def get_favorite(request: Request, user_id: int, data_id: int):
-        
-        try:
-            # 토큰 가져오기
-            token = request.headers['token']
-        except KeyError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='요청 토큰이 없습니다.')
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail='server error')
-
-        try:
-            # 즐겨찾기 추가
-            return DataFavoriteManager().get_favorite_list(token, user_id, data_id)
-        except PermissionError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='권한이 없습니다.')
-        except DataNotFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='디렉토리가 없습니다.')
-        except IsNotDirectory:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='디렉토가 아닙니다.')
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
