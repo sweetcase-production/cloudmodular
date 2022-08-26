@@ -18,6 +18,7 @@ ENV JWT_ALGORITHM HS256
 # Authtication Config
 ENV DATA_SHARED_LENGTH=7
 ENV REACT_APP_TOKEN_EXPIRED=7
+ENV MAX_UPLOAD_LEN=1000
 # Update
 RUN apt update -y
 RUN apt upgrade -y
