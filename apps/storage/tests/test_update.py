@@ -104,6 +104,8 @@ def api():
         root_id=mydir.id, user_id=user['id'], dirname='subdir')
     treedir['mydir']['subdir']['id'] = subdir.id
     # add hi.txt on subdir
+    hi.close()
+    hi = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
     files = DataFileCRUDManager().create(
         root_id=subdir.id,
         user_id=user['id'],
