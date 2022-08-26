@@ -209,7 +209,7 @@ class DataDBQuery(QueryCRUD):
             # 싸이즈만 변경하면 된다.
             data_info.size = data_format.size
             session.commit()
-            session.refresh(data_format)
+            session.refresh(data_info)
         except Exception as e:
             session.rollback()
             raise e

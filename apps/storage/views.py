@@ -1,6 +1,14 @@
 import json
-from typing import List, Optional
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, UploadFile, status
+from typing import Optional
+from fastapi import (
+    APIRouter, 
+    BackgroundTasks, 
+    HTTPException, 
+    Request, 
+    Response, 
+    UploadFile, 
+    status
+)
 import pydantic
 from fastapi.responses import FileResponse
 
@@ -16,7 +24,6 @@ storage_router = APIRouter(
 )
 
 class StorageView:
-
     """
     (POST)      /api/users/{user_id}/datas/{data_id}    파일/디렉토리 생성
     (GET)       /api/users/{user_id}/datas/{data_id}    파일/디렉토리 기본 정보
@@ -24,17 +31,16 @@ class StorageView:
     (DELETE)    /api/users/{user_id}/datas/{data_id}    파일/디렉토리 삭제
     """
 
-
     @staticmethod
     @storage_router.post(
         path='',
         status_code=status.HTTP_201_CREATED,
-        response_model=List[DataInfoRead])
+        response_model=DataInfoRead)
     async def create_data(
         request: Request, 
         user_id: int, 
-        data_id: int, 
-        files: Optional[List[UploadFile]] = None,
+        data_id: int,
+        file: Optional[UploadFile] = None,
     ):
         """
         파일/디렉토리 생성 API
@@ -77,7 +83,7 @@ class StorageView:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
 
-        if (not dirname) and (not files):
+        if (not dirname) and (not file):
             # 디렉토리, 파일 요청 둘다 아무것도 없음
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -87,7 +93,7 @@ class StorageView:
             # 파일 업로드 또는 디렉토리 생성
             created_datas = DataManager().create(
                 token, user_id,
-                data_id, files, dirname
+                data_id, file, dirname
             )
         except UsageLimited:
             raise HTTPException(
@@ -117,7 +123,7 @@ class StorageView:
         except DataAlreadyExists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail='해당 디렉토리가 이미 존재합니다.')
+                detail='같은 이름의 디렉토리가 이미 존재합니다.')
         except Exception as e:
             import traceback
             traceback.print_exc()

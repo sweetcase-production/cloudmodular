@@ -18,6 +18,7 @@ ENV JWT_ALGORITHM HS256
 # Authtication Config
 ENV DATA_SHARED_LENGTH=7
 ENV REACT_APP_TOKEN_EXPIRED=7
+ENV MAX_UPLOAD_LEN=1000
 # Update
 RUN apt update -y
 RUN apt upgrade -y
@@ -30,7 +31,7 @@ RUN apt install -y default-libmysqlclient-dev
 RUN apt install -y git
 # setting backend
 WORKDIR /
-RUN git clone -b release/v0.1.0 https://github.com/SweetCase-Cobalto/cloudmodular.git
+RUN git clone -b release/v0.1.1 https://github.com/SweetCase-Cobalto/cloudmodular.git
 WORKDIR /cloudmodular
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
@@ -38,7 +39,7 @@ RUN pip install -r requirements.txt
 RUN curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 RUN apt-get install -y nodejs
 WORKDIR /
-RUN git clone -b release/v0.1.0 https://github.com/SweetCase-Cobalto/cloudmodular-web.git
+RUN git clone -b release/v0.1.1 https://github.com/SweetCase-Cobalto/cloudmodular-web.git
 WORKDIR /cloudmodular-web
 RUN npm i
 RUN npm run build

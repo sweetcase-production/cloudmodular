@@ -55,9 +55,9 @@ def api():
     files = DataFileCRUDManager().create(
         root_id=0,
         user_id=client_info["id"],
-        files=[UploadFile(filename=hi.name, file=hi)]
+        file=UploadFile(filename=hi.name, file=hi)
     )
-    file_id = files[0].id
+    file_id = files.id
 
     yield TestClient(app)
 

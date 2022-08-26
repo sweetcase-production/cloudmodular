@@ -14,6 +14,7 @@ def api():
     # Load Application
     Bootloader.migrate_database()
     Bootloader.init_storage()
+
     # Add User
     user_info = {
         'email': 'seokbong60@gmail.com',
@@ -24,13 +25,18 @@ def api():
     # 테스트 대상의 사용자 생성
     user = UserCRUDManager().create(**user_info)
     user_info['id'] = user.id
+
     # Test용 api 리턴
     yield TestClient(app)
+    
     # Remove Application
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
 def test_success_get_login_token(api: TestClient):
+    """
+    로그인 성공
+    """
     email, passwd = user_info['email'], user_info['passwd']
     req = {
         'issue': 'login',
@@ -43,6 +49,9 @@ def test_success_get_login_token(api: TestClient):
     assert res.json()['user_id'] == user_info['id']
 
 def test_passwd_failed_while_get_login_token(api: TestClient):
+    """
+    로그인 실패
+    """
     email = user_info['passwd']
     req = {
         'issue': 'login',

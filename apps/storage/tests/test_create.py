@@ -77,10 +77,7 @@ def reload_file():
 def test_no_token(api: TestClient):
     res = api.post(
         f'/api/users/{admin_info["id"]}/datas/0',
-        files=[
-            ('files', (f1.name, f1)), 
-            ('files', (f2.name, f2))
-        ]
+        files=[('file', (f1.name, f1))]
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -106,16 +103,12 @@ def test_request_nothing(api: TestClient):
 def test_admin_try_to_upload_no_user(api: TestClient):
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
-
     # File
     reload_file()
     res = api.post(
         f'/api/users/99999999999/datas/0',
         headers={'token': token},
-        files=[
-            ('files', (f1.name, f1)), 
-            ('files', (f2.name, f2))
-        ]
+        files=[('file', (f1.name, f1)),]
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
@@ -130,19 +123,14 @@ def test_admin_try_to_upload_no_user(api: TestClient):
 def test_fileupload_in_no_exists_root(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    
     # File
     reload_file()
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/999999999999999999',
         headers={'token': token},
-        files=[
-            ('files', (f1.name, f1)), 
-            ('files', (f2.name, f2))
-        ]
+        files=[('file', (f1.name, f1)),]
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
-
     # Directory
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/999999999999999999',
@@ -243,8 +231,7 @@ def test_success_directory(api: TestClient):
         json={'dirname': 'mydir'}
     )
     assert res.status_code == status.HTTP_201_CREATED
-    assert len(res.json()) == 1
-    main_mydir = res.json()[0]
+    main_mydir = res.json()
     # Response Data 확인
     assert main_mydir == {
         'is_dir': True,
@@ -264,8 +251,7 @@ def test_success_directory(api: TestClient):
         json={'dirname': 'subdir'}
     )
     assert res.status_code == status.HTTP_201_CREATED
-    assert len(res.json()) == 1
-    sub_subdir = res.json()[0]
+    sub_subdir = res.json()
     # Response Data 확인
     assert sub_subdir == {
         'is_dir': True,
@@ -290,16 +276,14 @@ def test_failed_upload_file_same_named_directory(api: TestClient):
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
-        files = [('files', ('mydir', f1)),]
+        files = [('file', ('mydir', f1)),]
     )
-    assert res.status_code == status.HTTP_201_CREATED
-    assert res.json() == [] # 생성에 실패했으므로 비어있는 리스트가 된다.
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def admin_can_create_to_other_storage(api: TestClient):
     # 관리자는 다른 계정에 디렉토리를 생성할 수 있다.
     email, passwd = admin_info['email'], admin_info['passwd']
     token = AppAuthManager().login(email, passwd)
-    
     # sub의 mydir 생성
     # 같은 이름의 디렉토리라도 다른 위치면 생성이 가능하다
     main_mydir = created_dirs['mydir']
@@ -309,8 +293,7 @@ def admin_can_create_to_other_storage(api: TestClient):
         json={'dirname': 'mydir'}
     )
     assert res.status_code == status.HTTP_201_CREATED
-    assert len(res.json()) == 1
-    sub_mydir = res.json()[0]
+    sub_mydir = res.json()
     # Response Data 확인
     assert sub_mydir == {
         'is_dir': True,
@@ -345,31 +328,35 @@ def test_file_upload(api: TestClient):
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
-        files = [
-            ('files', (f1.name, f1)), 
-            ('files', (f2.name, f2))
-        ]
+        files = [('file', (f1.name, f1)),]
     )
     assert res.status_code == status.HTTP_201_CREATED
     output = res.json()
-    assert output == [
-        {
-            'is_dir': False,
-            'id': output[0]['id'],
-            'root': '/',
-            'name': 'hi.txt',
-            'size': 12,
-            'created': output[0]['created']
-        },
-        {
-            'is_dir': False,
-            'id': output[1]['id'],
-            'root': '/',
-            'name': 'hi2.txt',
-            'size': 6,
-            'created': output[1]['created']
-        }
-    ]
+    assert output ==  {
+        'is_dir': False,
+        'id': output['id'],
+        'root': '/',
+        'name': 'hi.txt',
+        'size': 12,
+        'created': output['created']
+    }
+    
+
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/0',
+        headers={'token': token},
+        files = [('file', (f2.name, f2))]
+    )
+    assert res.status_code == status.HTTP_201_CREATED
+    output = res.json()
+    assert output == {
+        'is_dir': False,
+        'id': output['id'],
+        'root': '/',
+        'name': 'hi2.txt',
+        'size': 6,
+        'created': output['created']
+    }
 
     # 서브 디렉토리 파일 업로드 + 관리자가 특정 클라이언트의 스토리지에 업로드 가능
     email, passwd = admin_info['email'], admin_info['passwd']
@@ -378,37 +365,39 @@ def test_file_upload(api: TestClient):
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/{created_dirs["mydir"]["id"]}',
         headers={'token': token},
-        files = [
-            ('files', (f1.name, f1)), 
-            ('files', (f2.name, f2))
-        ]
+        files = [('file', (f1.name, f1))]
     )
     assert res.status_code == status.HTTP_201_CREATED
     output = res.json()
-    assert output == [
-        {
-            'is_dir': False,
-            'id': output[0]['id'],
-            'root': '/mydir/',
-            'name': 'hi.txt',
-            'size': 12,
-            'created': output[0]['created']
-        },
-        {
-            'is_dir': False,
-            'id': output[1]['id'],
-            'root': '/mydir/',
-            'name': 'hi2.txt',
-            'size': 6,
-            'created': output[1]['created']
-        }
-    ]
+    assert output == {
+        'is_dir': False,
+        'id': output['id'],
+        'root': '/mydir/',
+        'name': 'hi.txt',
+        'size': 12,
+        'created': output['created']
+    }
     
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/{created_dirs["mydir"]["id"]}',
+        headers={'token': token},
+        files = [('file', (f2.name, f2))]
+    )
+    assert res.status_code == status.HTTP_201_CREATED
+    output = res.json()
+    assert output == {
+        'is_dir': False,
+        'id': output['id'],
+        'root': '/mydir/',
+        'name': 'hi2.txt',
+        'size': 6,
+        'created': output['created']
+    }
     # 파일 생성 확인
     assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi.txt')
     assert os.path.isfile(f'{SERVER["storage"]}/storage/{client_info["id"]}/root/mydir/hi2.txt')
 
-    f1_id = output[0]['id']
+    f1_id = output['id']
 
 def test_rewrite_file(api: TestClient):
     # 같은 이릉의 파일 업로드일 경우, 덮어쓰기 가능
@@ -419,9 +408,7 @@ def test_rewrite_file(api: TestClient):
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
-        files = [
-            ('files', (f1.name, f1)),
-        ]
+        files = [('file', (f1.name, f1))]
     )
     assert res.status_code == status.HTTP_201_CREATED
     # 파일 존재 확인
@@ -437,7 +424,7 @@ def test_try_create_on_file(api: TestClient):
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/{f1_id}',
         headers={'token': token},
-        files = [('files', (f1.name, f1))]
+        files = [('file', (f1.name, f1))]
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
@@ -458,7 +445,7 @@ def test_usage_limited(api: TestClient):
     res = api.post(
         f'/api/users/{client_info["id"]}/datas/0',
         headers={'token': token},
-        files = [('files', (f3.name, f3))]
+        files = [('file', (f3.name, f3))]
     )
     assert res.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
     # 원상태
@@ -488,11 +475,24 @@ def test_db_no_exists_but_storage_exists(api: TestClient):
     )
     assert res.status_code == status.HTTP_201_CREATED
     output = res.json()
-    assert output == [{
+    assert output == {
         'is_dir': True,
-        'id': output[0]['id'],
+        'id': output['id'],
         'root': '/',
         'name': 'mydir',
         'size': 0,
-        'created': output[0]['created'],
-    }]
+        'created': output['created'],
+    }
+
+def test_failed_over_size_of_file(api: TestClient):
+    # 제한 크기 이상의 파일 업로드 불가능 (여기서는 1MB 이상)
+    email, passwd = client_info['email'], client_info['passwd']
+    token = AppAuthManager().login(email, passwd)
+    img = open(f'{TEST_EXAMLE_ROOT}/piano.jpg', 'rb')
+    
+    res = api.post(
+        f'/api/users/{client_info["id"]}/datas/0',
+        headers={'token': token},
+        files=[('file', (img.name, img)),]
+    )
+    assert res.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
