@@ -46,8 +46,6 @@ class DataFileCRUDManager(CRUDManager):
 
         :return: 생성된 데이터 리스트
         """
-        res: List[DataInfo] = []
-
         # user 존재 여부 확인
         user: User = UserDBQuery().read(user_id=user_id)
         if not user:

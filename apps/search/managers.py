@@ -147,7 +147,8 @@ class DataSearchManager(FrontendManager):
                 'is_dir': data.is_dir,
                 'name': data.name,
                 'is_favorite': data.is_favorite,
-                'shared_id': shared_id
+                'shared_id': shared_id,
+                "size": data.size,
             })
         
 
