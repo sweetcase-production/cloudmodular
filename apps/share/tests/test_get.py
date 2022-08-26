@@ -53,12 +53,12 @@ def api():
     other_info['id'] = user.id
     # Add File
     hi = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
-    files = DataFileCRUDManager().create(
+    file = DataFileCRUDManager().create(
         root_id=0,
         user_id=client_info["id"],
-        files=[UploadFile(filename=hi.name, file=hi)]
+        file=UploadFile(filename=hi.name, file=hi)
     )
-    file_id = files[0].id
+    file_id = file.id
 
     shared = DataSharedQuery().create(file_id)
     shared_id = shared.id

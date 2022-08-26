@@ -71,39 +71,31 @@ def api():
     )
     treedir['mydir']['id'] = mydir.id
     # add hi.txt, hi2.txt on mydir
-    files = DataFileCRUDManager().create(
-        root_id=mydir.id,
-        user_id=user.id,
-        files=[
-            UploadFile(filename=hi.name, file=hi),
-            UploadFile(filename=hi2.name, file=hi2)
-        ]
-    )
+    files = []
+    for file in [hi, hi2]:
+        files.append(DataFileCRUDManager().create(
+            root_id=mydir.id, user_id=user.id,
+            file=UploadFile(filename=file.name, file=file)))
     treedir['mydir']['hi.txt']['id'] = files[0].id
     treedir['mydir']['hi2.txt']['id'] = files[1].id
     # add subdir on mydir
     subdir = DataDirectoryCRUDManager().create(
-        root_id=mydir.id,
-        user_id=user.id,
-        dirname='subdir'
-    )
+        root_id=mydir.id, user_id=user.id, dirname='subdir')
     treedir['mydir']['subdir']['id'] = subdir.id
     # add hi.txt on subdir
+    hi.close()
+    hi = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
     files = DataFileCRUDManager().create(
         root_id=subdir.id,
         user_id=user.id,
-        files=[
-            UploadFile(filename=hi.name, file=hi),
-        ]
-    )
-    treedir['mydir']['subdir']['hi.txt']['id'] = files[0].id
-
+        file=UploadFile(filename=hi.name, file=hi))
+    treedir['mydir']['subdir']['hi.txt']['id'] = files.id
     # Add Admin Info
     admin_info = {
         'email': 'seokbong61@gmail.com',
         'name': 'jeonhyun2',
         'passwd': 'password0123',
-        'storage_size': 5,
+        'storage_size': 2,
         'is_admin': True,
     }
     user = UserCRUDManager().create(**admin_info)
@@ -114,7 +106,7 @@ def api():
         'email': 'seokbong62@gmail.com',
         'name': 'jeonhyun3',
         'passwd': 'password0123',
-        'storage_size': 5,
+        'storage_size': 2,
     }
     user = UserCRUDManager().create(**other_info)
     other_info['id'] = user.id
@@ -256,6 +248,7 @@ def test_all_search_on_current_root(api: TestClient):
             'name': 'mydir',
             'is_favorite': False,
             'shared_id': treedir['mydir']['shared_id'],
+            'size': 0,
         }
     ]
 
@@ -279,18 +272,18 @@ def test_all_search_on_subdir_root(api: TestClient):
         del output['created']
     assert outputs == [
         {
-            
             'id': treedir['mydir']['subdir']['hi.txt']['id'],
             'root': '/mydir/subdir/',
             'is_dir': False,
             'name': 'hi.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 12,
         }
     ]
 
-def test_all_search_on_subdir_root_by_root_id(api: TestClient):
-    # subdir위치에서의 파일 디렉토리 검색
+def test_all_search_on_subdir_by_root_id(api: TestClient):
+    # subdir위치에서의 파일 디렉토리 검색 (root id)
     email, passwd = admin_info["email"], admin_info["passwd"]
     token = AppAuthManager().login(email, passwd)
     res = api.get(
@@ -315,6 +308,7 @@ def test_all_search_on_subdir_root_by_root_id(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 12,
         }
     ]
 
@@ -346,6 +340,7 @@ def test_all_search_by_recursive(api: TestClient):
             'name': 'mydir',
             'is_favorite': False,
             'shared_id': treedir['mydir']['shared_id'],
+            'size': 0,
         },
         {
             'id': treedir['mydir']['subdir']['id'],
@@ -354,6 +349,7 @@ def test_all_search_by_recursive(api: TestClient):
             'name': 'subdir',
             'is_favorite': True,
             'shared_id': -1,
+            'size': 0,
         },
         {
             'id': treedir['mydir']['hi.txt']['id'],
@@ -362,6 +358,7 @@ def test_all_search_by_recursive(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         },
         {
             'id': treedir['mydir']['subdir']['hi.txt']['id'],
@@ -370,6 +367,7 @@ def test_all_search_by_recursive(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 12,
         },
         {
             'id': treedir['mydir']['hi2.txt']['id'],
@@ -378,6 +376,7 @@ def test_all_search_by_recursive(api: TestClient):
             'name': 'hi2.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 6,
         },
     ]
 
@@ -408,6 +407,7 @@ def test_all_by_recursive_in_root_id(api: TestClient):
             'name': 'mydir',
             'is_favorite': False,
             'shared_id': treedir['mydir']['shared_id'],
+            'size': 0,
         },
         {
             'id': treedir['mydir']['subdir']['id'],
@@ -416,6 +416,7 @@ def test_all_by_recursive_in_root_id(api: TestClient):
             'name': 'subdir',
             'is_favorite': True,
             'shared_id': -1,
+            'size': 0,
         },
         {
             'id': treedir['mydir']['hi.txt']['id'],
@@ -424,6 +425,7 @@ def test_all_by_recursive_in_root_id(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         },
         {
             'id': treedir['mydir']['subdir']['hi.txt']['id'],
@@ -432,6 +434,7 @@ def test_all_by_recursive_in_root_id(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 12,
         },
         {
             'id': treedir['mydir']['hi2.txt']['id'],
@@ -440,6 +443,7 @@ def test_all_by_recursive_in_root_id(api: TestClient):
             'name': 'hi2.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 6,
         },
     ]
 
@@ -472,6 +476,7 @@ def test_search_shared(api: TestClient):
             'name': 'mydir',
             'is_favorite': False,
             'shared_id': treedir['mydir']['shared_id'],
+            'size': 0,
         },
         {
             'id': treedir['mydir']['hi.txt']['id'],
@@ -480,6 +485,7 @@ def test_search_shared(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         },
     ]
 
@@ -511,6 +517,7 @@ def test_search_by_favorite(api: TestClient):
             'name': 'subdir',
             'is_favorite': True,
             'shared_id': -1,
+            'size': 0,
         },
         {
             'id': treedir['mydir']['hi.txt']['id'],
@@ -519,6 +526,7 @@ def test_search_by_favorite(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         }
     ]
 
@@ -549,6 +557,7 @@ def test_certain_word(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         },
         {
             'id': treedir['mydir']['subdir']['hi.txt']['id'],
@@ -557,6 +566,7 @@ def test_certain_word(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 12,
         },
         {
             'id': treedir['mydir']['hi2.txt']['id'],
@@ -565,6 +575,7 @@ def test_certain_word(api: TestClient):
             'name': 'hi2.txt',
             'is_favorite': False,
             'shared_id': -1,
+            'size': 6,
         },
     ]
 
@@ -595,6 +606,7 @@ def test_tags(api: TestClient):
             'name': 'subdir',
             'is_favorite': True,
             'shared_id': -1,
+            'size': 0,
         },
         {
             'id': treedir['mydir']['hi.txt']['id'],
@@ -603,6 +615,7 @@ def test_tags(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         },
     ]
     
@@ -630,5 +643,6 @@ def test_tags(api: TestClient):
             'name': 'hi.txt',
             'is_favorite': True,
             'shared_id': treedir['mydir']['hi.txt']['shared_id'],
+            'size': 12,
         },
     ]

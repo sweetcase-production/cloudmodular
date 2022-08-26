@@ -26,6 +26,7 @@ jobs:
       JWT_KEY: Example
       JWT_ALGORITHM: HS256
       DATA_SHARED_LENGTH: 7
+      MAX_UPLOAD_LEN: 1
       
     steps:
     - uses: actions/checkout@v3

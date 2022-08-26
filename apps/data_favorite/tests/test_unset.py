@@ -37,6 +37,7 @@ def api():
     # Load Application
     Bootloader.migrate_database()
     Bootloader.init_storage()
+
     # Add Client
     client_info = {
         'email': 'seokbong60@gmail.com',
@@ -64,33 +65,27 @@ def api():
         dirname='mydir'
     )
     treedir['mydir']['id'] = mydir.id
+
     # add hi.txt, hi2.txt on mydir
-    files = DataFileCRUDManager().create(
-        root_id=mydir.id,
-        user_id=user.id,
-        files=[
-            UploadFile(filename=hi.name, file=hi),
-            UploadFile(filename=hi2.name, file=hi2)
-        ]
-    )
+    files = []
+    for file in [hi, hi2]:
+        files.append(DataFileCRUDManager().create(
+            root_id=mydir.id, user_id=user.id,
+            file=UploadFile(filename=file.name, file=file)))
     treedir['mydir']['hi.txt']['id'] = files[0].id
     treedir['mydir']['hi2.txt']['id'] = files[1].id
     # add subdir on mydir
     subdir = DataDirectoryCRUDManager().create(
-        root_id=mydir.id,
-        user_id=user.id,
-        dirname='subdir'
-    )
+        root_id=mydir.id, user_id=user.id, dirname='subdir')
     treedir['mydir']['subdir']['id'] = subdir.id
     # add hi.txt on subdir
+    hi.close()
+    hi = open(f'{TEST_EXAMLE_ROOT}/hi.txt', 'rb')
     files = DataFileCRUDManager().create(
         root_id=subdir.id,
         user_id=user.id,
-        files=[
-            UploadFile(filename=hi.name, file=hi),
-        ]
-    )
-    treedir['mydir']['subdir']['hi.txt']['id'] = files[0].id
+        file=UploadFile(filename=hi.name, file=hi))
+    treedir['mydir']['subdir']['hi.txt']['id'] = files.id
 
     # Add Admin Info
     admin_info = {
@@ -126,14 +121,19 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
-
 def test_no_token(api: TestClient):
+    """
+    토큰 없음
+    """
     res = api.delete(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}/favorites',
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_other_access_failed(api: TestClient):
+    """
+    관리자를 제외한 다른 사람은 접근할 수 없다.
+    """
     email, passwd = other_info['email'], other_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.delete(
@@ -143,6 +143,9 @@ def test_other_access_failed(api: TestClient):
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_data_no_exists(api: TestClient):
+    """
+    대상 데이터가 애초에 존재하지 않는다.
+    """
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.delete(
@@ -152,6 +155,9 @@ def test_data_no_exists(api: TestClient):
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_try_unseted_data(api: TestClient):
+    """
+    설정 해제된 데이터를 또 다시 시도할 수는 없다.
+    """
     email, passwd = client_info['email'], client_info['passwd']
     token = AppAuthManager().login(email, passwd)
     res = api.delete(
