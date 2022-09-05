@@ -119,17 +119,8 @@ def api():
     Bootloader.remove_storage()
     Bootloader.remove_database()
 
-def test_omit_param_keys(api: TestClient):
-    res = api.get(
-        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
-    )
-    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
 def test_no_token(api: TestClient):
-    res = api.get(
-        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
-        params={'method': 'info'}
-    )
+    res = api.get(f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}')
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_other_access_failed(api: TestClient):
@@ -137,9 +128,7 @@ def test_other_access_failed(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 def test_no_exists_data(api: TestClient):
@@ -147,9 +136,7 @@ def test_no_exists_data(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/999999999999999999',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_user_not_found(api: TestClient):
@@ -157,9 +144,7 @@ def test_user_not_found(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/999999/datas/0',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 def test_search_file(api: TestClient):
@@ -167,9 +152,7 @@ def test_search_file(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
         'created': res.json()['created'],
@@ -184,9 +167,7 @@ def test_search_directory(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
         'created': res.json()['created'],
@@ -201,9 +182,7 @@ def test_admin_can_search_client_repo(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
         'created': res.json()['created'],
@@ -233,9 +212,7 @@ def test_size_changed_illeagal_in_db(api: TestClient):
     token = AppAuthManager().login(email, passwd)
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/{target_id}',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_200_OK
     assert res.json() == {
         'created': res.json()['created'],
@@ -244,35 +221,6 @@ def test_size_changed_illeagal_in_db(api: TestClient):
         'name': 'hi.txt',
         'size': 12,
     }
-
-def test_download_file(api: TestClient):
-    email, passwd = client_info['email'], client_info['passwd']
-    token = AppAuthManager().login(email, passwd)
-    res = api.get(
-        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
-        headers={'token': token},
-        params={'method': 'download'}
-    )
-    assert res.status_code == status.HTTP_200_OK
-    assert res.headers.get('content-type') == 'text/plain; charset=utf-8'
-
-def test_download_directory(api: TestClient):
-    email, passwd = client_info['email'], client_info['passwd']
-    token = AppAuthManager().login(email, passwd)
-
-    res = api.get(
-        f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["id"]}',
-        headers={'token': token},
-        params={'method': 'download'}
-    )
-    assert res.status_code == status.HTTP_200_OK
-    assert res.headers.get('content-type') == 'application/zip'
-
-
-    """
-    DB에는 데이터가 존재하는데 스토리지에는 없다.
-    이때 DB데이터를 삭제하고 404를 호출한다.
-    """
 
 def test_db_exists_but_no_in_storage(api: TestClient):
     email, passwd = client_info['email'], client_info['passwd']
@@ -284,9 +232,7 @@ def test_db_exists_but_no_in_storage(api: TestClient):
     # Request
     res = api.get(
         f'/api/users/{client_info["id"]}/datas/{treedir["mydir"]["hi.txt"]["id"]}',
-        headers={'token': token},
-        params={'method': 'info'}
-    )
+        headers={'token': token})
     assert res.status_code == status.HTTP_404_NOT_FOUND
     session = DatabaseGenerator.get_session()
     # DB에도 삭제되었는지 확인

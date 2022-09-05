@@ -140,17 +140,8 @@ class StorageView:
     async def get_data_info(
         request: Request, 
         user_id: int, 
-        data_id: int, 
-        method: str,
-        background_tasks: BackgroundTasks,
+        data_id: int,
     ):
-
-        if method not in ('info', 'download'):
-            # 잘못된 method값
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='잘못된 접근 입니다.')
-
         try:
             # 토큰 가져오기
             token = request.headers['token']
@@ -165,7 +156,7 @@ class StorageView:
 
         try:
             # 정보 검색
-            data = DataManager().read(token, user_id, data_id, method)
+            data = DataManager().read(token, user_id, data_id)
         except PermissionError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -186,18 +177,8 @@ class StorageView:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='server error')
-
-        if method == 'info':
-            return data['info']
         else:
-            # 파일 다운로드
-            download_root = data['file']
-            data['file'] = FileResponse(download_root)
-            
-            # 디렉토리일 경우에는 임시파일을 후에 지운다
-            if data['info']['is_dir']:
-                background_tasks.add_task(background_remove_file, download_root)
-            return data['file']
+            return data
 
     @staticmethod
     @storage_router.patch(

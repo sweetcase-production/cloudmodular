@@ -340,7 +340,6 @@ class DataManager(FrontendManager):
         self, token: str, 
         user_id: int, 
         data_id: int, 
-        mode: str = 'info'
     ) -> Dict[str, Any]:
         
         op_email, issue = decode_token(token, LoginTokenGenerator)
@@ -387,23 +386,13 @@ class DataManager(FrontendManager):
 
         # 리턴 데이터
         res = {
-            'info': {
-                'created': data_info.created,
-                'root': data_info.root,
-                'is_dir': data_info.is_dir,
-                'name': data_info.name,
-                'size': len(os.listdir(raw_root)) if data_info.is_dir \
-                    else data_info.size
-            }
+            'created': data_info.created,
+            'root': data_info.root,
+            'is_dir': data_info.is_dir,
+            'name': data_info.name,
+            'size': len(os.listdir(raw_root)) if data_info.is_dir \
+                else data_info.size
         }
-
-        if mode == 'download':
-            # 다운로드 모드
-            # 다운로드 대상의 파일 주소만 리턴
-            if not data_info.is_dir:
-                res['file'] = DataFileCRUDManager().read(raw_root)
-            else:
-                res['file'] = DataDirectoryCRUDManager().read(raw_root)
         return res
     
     def update(
