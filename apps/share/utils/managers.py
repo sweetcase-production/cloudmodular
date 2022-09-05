@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+from typing import Tuple
 from apps.auth.utils.managers import AppAuthManager
 
 from apps.share.models import DataShared
@@ -147,7 +148,7 @@ class DataSharedManager(FrontendManager):
             'is_dir': data_info.is_dir,
         }
 
-    def download_shared_data(self, shared_id: int):
+    def download_shared_data(self, shared_id: int) -> Tuple[str, bool]:
         shared: DataShared = DataSharedQuery().read(shared_id=shared_id)
         # 공유 여부 체크
         if not shared or not shared.is_active:
@@ -168,6 +169,4 @@ class DataSharedManager(FrontendManager):
         admin_token = AppAuthManager() \
             .login(admin_user.email, admin_user.passwd, hashing=False)
         # 실제 다운로드 루트 구하기
-        download_root = \
-            DataManager().read(admin_token, data_info.user_id, shared.datainfo_id, 'download')
-        return download_root['file'], data_info.is_dir
+        return DataManager().download(admin_token, data_info.user_id, [shared.datainfo_id], root_str=data_info.root)

@@ -33,6 +33,7 @@ class UserStorageCreator(QueryCreator):
         # 새로 구축
         os.mkdir(main_root)
         os.mkdir(f'{main_root}/root')   # 파일/디렉토리가 저장되는 곳
+        os.mkdir(f'{main_root}/tmp')    # 임시파일
         return main_root
 
 class UserStorageDestroyer(QueryDestroyer):

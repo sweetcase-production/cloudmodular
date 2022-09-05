@@ -1,5 +1,5 @@
 from sqlalchemy import and_, Sequence, func
-from typing import Optional
+from typing import Optional, List, Tuple
 import os
 
 from apps.storage.models import DataInfo
@@ -191,6 +191,39 @@ class DataDBQuery(QueryCRUD):
     destroyer = DataDBQueryDestroyer
     reader = DataDBQueryReader
     updator = DataDBQueryUpdator
+
+    def search_multiple_ids_in_one_location(
+        self,
+        target_ids: List[int],
+        root_id: Optional[int] = None,
+        root_str: Optional[str] = None,
+    ) -> Tuple[str, List[DataInfo]]:
+        """
+        해당 루트에서 ids들에 해당되는 데이터 찾기
+
+        :return: [데이터 정보, 실제 루트]
+        """
+        session = DatabaseGenerator.get_session()
+        q = session.query(DataInfo)
+        # 루트 찾기
+        root: Optional[DataInfo] = None
+        root_name: Optional[str] = None
+        if root_id is not None and root_id == 0:
+            root_name = '/'
+        elif root_str:
+            root_name = root_str
+        else:
+            root = q.filter(and_(DataInfo.id == root_id, DataInfo.is_dir == True)).scalar()
+            if root:
+                root_name = f'{root.root}{root.name}/'
+        if not root_name:
+            # 존재하지가 않음
+            raise DataNotFound()
+        # 데이터 찾기
+        res = q.filter(and_(
+            DataInfo.root == root_name,
+            DataInfo.id.in_(target_ids))).all()
+        return root_name, res
 
     def update_file_automatic(
         self, 

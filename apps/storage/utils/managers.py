@@ -1,5 +1,6 @@
+from ast import operator
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import UploadFile
 import os
 import datetime
@@ -469,3 +470,98 @@ class DataManager(FrontendManager):
                 DataFileCRUDManager().destroy(user_id, data_id)
         except Exception as e:
             raise e
+
+    def download(
+        self, token: str,
+        user_id: int,
+        target_ids: List[int],
+        root_id: Optional[int] = None,
+        root_str: Optional[str] = None,
+    ) -> Tuple[str, bool]:
+        """
+        파일, 디렉토리, 또는 여러개 다운로드
+
+        :return: [다운로드하기 위한 실제 파일 루트, 임시 파일로 묶였는지]
+        """
+        op_email, issue = decode_token(token, LoginTokenGenerator)
+        operator: User = UserDBQuery().read(user_email=op_email)
+
+        if not operator:
+            # 요청자가 존재하지 않음
+            raise PermissionError()
+        # Admin 또는 자기 자신
+        if not bool(
+            LoginedOnly(issue) & (
+                AdminOnly(operator.is_admin) | OnlyMine(operator.id, user_id))):
+            raise PermissionError()
+        # 해당 유저가 존재하는 지 확인
+        if not UserDBQuery().read(user_id=user_id):
+            raise UserNotFound()
+        if not target_ids:
+            # 요청하는 데이터가 없음
+            raise ValueError()
+        # ids에 해당되는 정보와 데이터 찾기
+        root_str, targets = \
+            DataDBQuery() \
+                .search_multiple_ids_in_one_location(
+                    target_ids=target_ids, 
+                    root_id=root_id, 
+                    root_str=root_str)
+        # 검색된 데이터에 대한 실제 루트 생성
+        convert_real_root = lambda d: f'{SERVER["storage"]}/storage/{user_id}/root{root_str}{d.name}'
+        storage_roots = list(map(convert_real_root, targets))
+
+        if len(target_ids) == 1:
+            # 단일 데이터 요청인 경우
+            if not targets:
+                # 겁색 안됨
+                raise DataNotFound()
+            else:
+                # 검색됨
+                t = targets[0]
+                if not t.is_dir:
+                    # 디렉토리가 아닌 파일
+                    return storage_roots[0], False
+                else:
+                    # 디렉토리일 경우 압축
+                    zip_root = f'{SERVER["storage"]}/storage/{user_id}/tmp/' + \
+                        f'download-{datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")}'
+                    tmp_zip = shutil.make_archive(zip_root, 'zip', storage_roots[0])
+                    return tmp_zip, True
+        else:
+            # 두개 이상
+            if not targets:
+                # 하나도 못찾음
+                raise DataNotFound()
+            else:
+                """
+                하나 이상 무조건 압축
+                이때 tmp에 압축할 디렉토리를 만든 다음
+                선택된 실제 파일 및 디렉토리들을 해당 디렉토리로 이동시킨다.
+                그 다음 압축을 진행해서 새 압축 파일을 만들고 다시 원래대로 복귀시킨다.
+
+                이게 가능한 이유는 파일 디렉토리 정보를 inode에서 관리하기 때문에 실제로 파일을 움직일 때
+                직접 Read/Write가 아닌 inode의 정보만 변경시킨다.
+
+                TODO 단 이때 무결성 처리가 필요하다. 즉 해당 Function이 작동하는 동안 다른 Traffic이 접근해서는 안된다.
+                """
+                # zip directory 이름 만들기
+                zip_root = f'{SERVER["storage"]}/storage/{user_id}/tmp/' + \
+                    f'download-{datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")}'
+                # TMP로 이동하기 위한 dst root 만드는 함수
+                convert_tmp_root = lambda d: f'{zip_root}/{d.name}'
+                tmp_element_roots = list(map(convert_tmp_root, targets))
+                # zip directory 생성
+                os.mkdir(zip_root)
+                for src, dst in zip(storage_roots, tmp_element_roots):
+                    # 선택 대상 파일 전부 tmp로 이동.
+                    shutil.move(src, dst)
+                # Zip파일 생성
+                tmp_zip = shutil.make_archive(zip_root, 'zip', zip_root)
+                # zip directory에 있는 데이터들 다시 복귀시키기
+                for src, dst in zip(tmp_element_roots, storage_roots):
+                    shutil.move(src, dst)
+                # zip directory 삭제
+                os.rmdir(zip_root)
+                # Return
+                return tmp_zip, True

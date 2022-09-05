@@ -1,8 +1,8 @@
 import json
-from typing import Optional
+from typing import Optional, List, Union
 from fastapi import (
     APIRouter, 
-    BackgroundTasks, 
+    BackgroundTasks,
     HTTPException, 
     Request, 
     Response, 
@@ -11,6 +11,7 @@ from fastapi import (
 )
 import pydantic
 from fastapi.responses import FileResponse
+from fastapi import Query
 
 from apps.storage.schemas import DataInfoRead
 from apps.storage.utils.managers import DataManager
@@ -29,6 +30,8 @@ class StorageView:
     (GET)       /api/users/{user_id}/datas/{data_id}    파일/디렉토리 기본 정보
     (PATCH)     /api/users/{user_id}/datas/{data_id}    파일/디렉토리 이름 수정
     (DELETE)    /api/users/{user_id}/datas/{data_id}    파일/디렉토리 삭제
+
+    (GET)       /api/users/{user_id}/datas/{data_id}/download   data_id 상애 있는 최소 1개 이상의 데이터 다운로드
     """
 
     @staticmethod
@@ -279,3 +282,58 @@ class StorageView:
                 detail='server error')
         else:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    @storage_router.get(
+        path='/download',
+        status_code=status.HTTP_200_OK)
+    async def download_data(
+        request: Request,
+        user_id: int, data_id: int, 
+        background_tasks: BackgroundTasks,
+        ids: List[int] = Query(None),
+    ):
+        try:
+            # 토큰 가져오기
+            token = request.headers['token']
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='요청 토큰이 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        try:
+            # 다운로드 시도.
+            download_root, is_zipped = DataManager().download(token, user_id, ids, root_id=data_id)
+        except PermissionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='권한이 없습니다.')
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='다운로드 하고 싶은 데이터를 선택해 주세요.')
+        except UserNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='해당 유저는 존재하지 않습니다.')
+        except DataNotFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='해당 데이터를 검색할 수 없습니다.')
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='server error')
+        else:
+            # 다운로드
+            donwload_object: FileResponse = FileResponse(download_root)
+            if is_zipped:
+                """
+                다수 또는 디렉토리를 묶기 위해 임시로 압축된 파일인 경우
+                응답 후 파일 삭제
+                """
+                background_tasks.add_task(background_remove_file, download_root)
+            return donwload_object
