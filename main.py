@@ -79,6 +79,7 @@ if __name__ == '__main__':
             async def index(request: Request):
                 return templates.TemplateResponse('index.html', {"request": request})
 
+
         app.add_middleware(
             CORSMiddleware,
             allow_origins=origins,
