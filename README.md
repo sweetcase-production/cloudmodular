@@ -1,7 +1,5 @@
 # CloudModular [Server]
-<p align="center">
-    <img width="70%" src="https://raw.githubusercontent.com/SweetCase-Cobalto/cloudmodular/main/readme-asset/title.png?token=GHSAT0AAAAAABUZRX43MQBPTOW7QM2WY5DWYVHIGLA">
-</p>
+![](readme-asset/title.png)
 
 <div align="center">
     <img src="https://img.shields.io/badge/Python 3.9-blue?style=flat-square&logo=python&logoColor=white" />
