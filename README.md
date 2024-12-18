@@ -1,5 +1,9 @@
 # CloudModular [Server]
-![](readme-asset/title.png)
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/sweetcase-production/cloudmodular/refs/heads/main/readme-asset/title.png" width="50%" />
+</p>
+
 
 <div align="center">
     <img src="https://img.shields.io/badge/Python 3.9-blue?style=flat-square&logo=python&logoColor=white" />
